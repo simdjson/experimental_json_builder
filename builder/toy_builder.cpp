@@ -219,11 +219,6 @@ std::string to_json_string(Z z) {
 int main() {
     X s1 = {.a = '1', .b = 10, .c = 0, .d = "test string\n\r\"", .e = {1, 2, 3}, .f = {"ab", "cd", "fg"}};
 
-    // auto x = struct_to_tuple<X>(s1);
-    // std::cout << x << std::endl;
-
-    // printjson(s1);
     std::cout << to_json_string(s1) << std::endl;
-
     return 0;
 }
