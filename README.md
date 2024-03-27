@@ -50,8 +50,15 @@ int main() {
 With ~200 lines of code (as you can see in the [toy_builder.cpp](builder/toy_builder.cpp)).
 
 ## Current status
-For now, the only version of the compiler that supports our implementation is the EDG experimental reflection branch that is current available in the [Compiler Explorer](https://godbolt.org).
+There are 2 versions of compiler that aim to support the C++ 26 reflection paper.
 
-For now, we will be working on the deserializing function inside the compiler explorer, since no implementation of the C++ 26 reflection paper is publicly available to the public.
+1. [Clang-p2996 llvm branch](https://github.com/bloomberg/clang-p2996/tree/p2996) that open-source and available in the [Compiler Explorer](https://godbolt.org/z/eoEej3E6j).
+2. EDG reflection branch that is only publicly available in the [Compiler Explorer](https://godbolt.org).
 
-We are also interested in measuring this against current approaches (performance + compilation time).
+For now, we will resort to #1, since it is open-source. A docker container is available with this particular branch (thanks to Daniel Lemire) at [docker_programming_station repo](https://github.com/lemire/docker_programming_station/tree/master/clangp2996).
+
+We are excited to hear that this reflection proposal seems to be on-track for C++26. [As per Herb Sutter](https://herbsutter.com/2024/03/22/trip-report-winter-iso-c-standards-meeting-tokyo-japan/).
+
+## Instructions for running the toy_builder example locally (using docker)
+1. Clone [docker_programming_station](https://github.com/lemire/docker_programming_station) repo and the [experimental_json_builder](https://github.com/simdjson/experimental_json_builder/tree/main) repo.
+2. Run `<path-to-your-docker-programming-station-repo>/clangp2996/run-docker-station 'clang++ src/toy_builder.cpp -freflection -std=c++26 -stdlib=libc++ -o toy_builder && ./toy_builder'`. Note that this will take some time when running it for the first time, since the specific container image has to be built.
