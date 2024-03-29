@@ -222,13 +222,6 @@ void print_json (array& desc, const std::tuple<T...>& t)
 }
 
 template <class Z>
-void printjson(Z z) {
-    constexpr auto names = print_struct<Z>();
-    auto x = struct_to_tuple<Z>(z);
-    print_json(names,x);
-}
-
-template <class Z>
 std::string to_json_string(Z z) {
     constexpr auto names = print_struct<Z>();
     auto x = struct_to_tuple<Z>(z);
