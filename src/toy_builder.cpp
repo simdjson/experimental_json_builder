@@ -7,8 +7,11 @@
 #include <vector>
 
 
-// The following 3 functions were taken from:
-// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2996r1.html#converting-a-struct-to-a-tuple
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Methods used for the expansion workaround discussed at:
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2996r1.html#implementation-status
+//////////////////////////////////////////////////////////////////////////////////////////////
+
 namespace __impl {
 template <auto... vals> struct replicator_type_expand_all {
   template <typename F>
@@ -32,7 +35,7 @@ template <auto... vals> replicator_type<vals...> replicator_expand = {};
 template <typename R> consteval auto expand_all(R range) {
   std::vector<std::meta::info> args;
   for (auto r : range) {
-    args.push_back(reflect_value(r));
+    args.push_back(std::meta::reflect_value(r));
   }
   return substitute(^__impl::replicator_expand_all, args);
 }
@@ -44,6 +47,12 @@ template <typename R> consteval auto expand(R range) {
   }
   return substitute(^__impl::replicator_expand, args);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// End of methods for the expansion workaround. This won't be needed once the expansion
+// statements from the C++ 26 reflection paper are implemented. For more details see:
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2996r1.html#implementation-status
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 struct field_descriptor {
   std::string_view field_name;
@@ -71,13 +80,13 @@ std::ostream &operator<<(std::ostream &os, const std::tuple<Args...> &tup) {
 
 template <typename S> consteval auto print_struct() {
   constexpr size_t N = []() consteval {
-    return nonstatic_data_members_of(^S).size();
+    return std::meta::nonstatic_data_members_of(^S).size();
   }();
   std::array<field_descriptor, N> member_size;
 
   [:expand(std::meta::nonstatic_data_members_of(^S)
            ):] >> [&, i = 0]<auto e>() mutable {
-    member_size[i] = {.field_name = name_of(e)};
+    member_size[i] = {.field_name = std::meta::name_of(e)};
     ++i;
   };
   return member_size;
@@ -93,7 +102,7 @@ struct X {
 };
 
 template <typename T> constexpr auto struct_to_tuple(T const &t) {
-  return [:expand_all(nonstatic_data_members_of(^T)):] >> [&]<auto... members> {
+  return [:expand_all(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto... members> {
     return std::make_tuple(t.[:members:]...);
   };
 }
