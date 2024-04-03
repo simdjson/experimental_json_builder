@@ -168,8 +168,8 @@ constexpr std::string atom(T t) {
   return "\"" + escape_json(std::string(t)) + "\"";
 }
 
-// Concept that checks if a type is a container but not a string (because string
-// handling is required to be different)
+// Concept that checks if a type is a container but not a string (because strings
+// handling must be handled differently)
 template <typename T>
 concept ContainerButNotString =
     requires(T a) {
