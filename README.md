@@ -61,4 +61,13 @@ We are excited to hear that this reflection proposal seems to be on-track for C+
 
 ## Instructions for running the toy_builder example locally (using docker)
 1. Clone [docker_programming_station](https://github.com/lemire/docker_programming_station) repo and the [experimental_json_builder](https://github.com/simdjson/experimental_json_builder/tree/main) repo.
-2. Run `<path-to-your-docker-programming-station-repo>/clangp2996/run-docker-station 'clang++ <path-to-this-repo>/src/toy_builder.cpp -freflection -std=c++26 -stdlib=libc++ -o toy_builder && ./toy_builder'`. Note that this will take some time when running it for the first time, since the specific container image has to be built.
+2. Navigate to `experimental_json_builder/src` and run `<path-to-your-docker-programming-station-repo>/clangp2996/run-docker-station /bin/bash`, this will enter a bash shell with access to the repo directory. Note that this will take some time when running it for the first time, since the specific container image has to be built.
+
+Now you should be able to run the following commands (on the `experimental_json_builder/src`):
+```bash
+mkdir build
+cd build
+cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-stdlib=libc++ -freflection -std=c++26" ..
+cmake --build .
+./ExperimentalJsonBuilder # this runs the example available in example.cpp
+```
