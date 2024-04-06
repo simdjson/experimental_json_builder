@@ -47,7 +47,7 @@ int main() {
 }
 ```
 
-With ~200 lines of code (as you can see in the [toy_builder.cpp](builder/toy_builder.cpp)).
+With ~200 lines of code (as you can see in the [toy_builder.cpp](prototype_playground/toy_builder.cpp)).
 
 ## Current status
 There are 2 versions of compiler that aim to support the C++ 26 reflection paper.
