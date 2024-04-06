@@ -60,14 +60,29 @@ For now, we will resort to #1, since it is open-source. A docker container is av
 We are excited to hear that this reflection proposal seems to be on-track for C++26. [As per Herb Sutter](https://herbsutter.com/2024/03/22/trip-report-winter-iso-c-standards-meeting-tokyo-japan/).
 
 ## Instructions for running the toy_builder example locally (using docker)
-1. Clone [docker_programming_station](https://github.com/lemire/docker_programming_station) repo and the [experimental_json_builder](https://github.com/simdjson/experimental_json_builder/tree/main) repo.
-2. Navigate to `experimental_json_builder/src` and run `<path-to-your-docker-programming-station-repo>/clangp2996/run-docker-station /bin/bash`, this will enter a bash shell with access to the repo directory. Note that this will take some time when running it for the first time, since the specific container image has to be built.
+
+We are assuming that you are running Linux or macOS. We recommend that Windows users 
+
+1. Make sure that you have [docker installed and running](https://docs.docker.com/engine/install/) on your system. Most Linux distributions support docker though some (like RedHat) have the equivalent (Podman). Users of Apple systems may want to [consider OrbStack](https://orbstack.dev). You do not need to familiar with docker, you just need to make sure that you are have it running.
+2. Navigate to our repository `experimental_json_builder` and run `./run_docker.sh bash`, this will enter a bash shell with access to the repo directory. Note that this will take some time when running it for the first time, since the specific container image has to be built. 
+
 
 Now you should be able to run the following commands (on the `experimental_json_builder/src`):
+
+1. Firstly, configure the build system with cmake:
 ```bash
-mkdir build
-cd build
-cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-stdlib=libc++ -freflection -std=c++26" ..
-cmake --build .
+cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-stdlib=libc++ -freflection -std=c++26" -S src -B build
+````
+This only needs to be done once.
+
+2. Build the code...
+```bash
+cmake --build build
+```
+
+3. Run the executable.
+```bash
 ./ExperimentalJsonBuilder # this runs the example available in example.cpp
 ```
+
+You can modify the source code with your favorite editor and run again steps 2 (Build the code) and 3 (Run the executable).
