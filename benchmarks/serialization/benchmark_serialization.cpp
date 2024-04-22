@@ -1,3 +1,5 @@
+#include "../../src/json_utils.hpp"
+#include "event_counter.h"
 #include <algorithm>
 #include <chrono>
 #include <ctime>
@@ -5,9 +7,9 @@
 #include <random>
 #include <string>
 #include <vector>
-#include "../../src/json_utils.hpp"
 
-/* This struct is based on one example from the https://app.json-generator.com/9jQKNGW0cMIA */
+/* This struct is based on one example from the
+ * https://app.json-generator.com/9jQKNGW0cMIA */
 
 struct Location {
   double lat;
@@ -118,8 +120,53 @@ User generate_random_user() {
   return user;
 }
 
+// Source of the 2 functions below:
+// https://github.com/simdutf/simdutf/blob/master/benchmarks/base64/benchmark_base64.cpp
+void pretty_print(size_t, size_t bytes, std::string name, event_aggregate agg) {
+  printf("%-40s : ", name.c_str());
+  printf(" %5.2f GB/s ", bytes / agg.elapsed_ns());
+  if (collector.has_events()) {
+    printf(" %5.2f GHz ", agg.cycles() / agg.elapsed_ns());
+    printf(" %5.2f c/b ", agg.cycles() / bytes);
+    printf(" %5.2f i/b ", agg.instructions() / bytes);
+    printf(" %5.2f i/c ", agg.instructions() / agg.cycles());
+  }
+  printf("\n");
+}
+
+template<typename T>
+void bench(std::vector<T> &data) {
+  size_t volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const std::vector<char> &b) { return a + b.size(); });
+  size_t max_size = std::max_element(data.begin(), data.end(),
+                                     [](const T &a,
+                                        const T &b) {
+                                       return a.size() < b.size();
+                                     })
+                        ->size();
+  printf("# volume: %zu bytes\n", volume);
+  printf("# max length: %zu bytes\n", max_size);
+  printf("# number of inputs: %zu\n", data.size());
+
+  printf("# serialization\n");
+  pretty_print(
+    data.size(), volume, "experimental_json_builder::to_json_string",
+    bench([&data] () {
+      for (const &T : data) {
+        // IO is probably not the best idea here since it might add significant overead (Get Daniel's feedback)
+        std::cout << experimental_json_builder::to_json_string() << std::endl;
+      }
+    });
+  );
+}
+
+
+
 int main() {
-    User user = generate_random_user();
-    // We now want to measure the time for the following operation
-    std::string dump = experimental_json_builder::to_json_string(user);
+  constexpr int test_sz = 100'000;
+  vector<User> test_data(test_sz);
+  for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
+  bench<User>(test_data);
+  return 0;
 }
