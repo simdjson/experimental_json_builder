@@ -7,6 +7,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <atomic>
 
 
 /* This struct is based on one example from the
@@ -17,10 +18,20 @@ struct Location {
   double lng;
 };
 
+struct Profile {
+  std::string name;
+  std::string company;
+  std::string dob;
+  std::string address;
+  Location location;
+  std::string about;
+};
+
 struct User {
   std::string id;
   std::string email;
   std::string username;
+  /*
   struct Profile {
     std::string name;
     std::string company;
@@ -28,7 +39,8 @@ struct User {
     std::string address;
     Location location;
     std::string about;
-  } profile;
+  } profile;*/
+  Profile profile;
   std::string apiKey;
   std::vector<std::string> roles;
   std::string createdAt;
@@ -123,6 +135,30 @@ User generate_random_user() {
 
 event_collector collector;
 
+template <class function_type>
+event_aggregate bench(const function_type &function, size_t min_repeat = 10,
+                      size_t min_time_ns = 1000000000,
+                      size_t max_repeat = 100) {
+  event_aggregate aggregate{};
+  size_t N = min_repeat;
+  if (N == 0) {
+    N = 1;
+  }
+  for (size_t i = 0; i < N; i++) {
+    std::atomic_thread_fence(std::memory_order_acquire);
+    collector.start();
+    function();
+    std::atomic_thread_fence(std::memory_order_release);
+    event_count allocate_count = collector.end();
+    aggregate << allocate_count;
+    if ((i + 1 == N) && (aggregate.total_elapsed_ns() < min_time_ns) &&
+        (N < max_repeat)) {
+      N *= 10;
+    }
+  }
+  return aggregate;
+}
+
 // Source of the 2 functions below:
 // https://github.com/simdutf/simdutf/blob/master/benchmarks/base64/benchmark_base64.cpp
 void pretty_print(size_t, size_t bytes, std::string name, event_aggregate agg) {
@@ -155,7 +191,7 @@ void bench(std::vector<T> &data) {
   printf("# serialization\n");
   pretty_print(
     data.size(), volume, "experimental_json_builder::to_json_string",
-    bench<T>([&data] () {
+    bench([&data] () {
       for (const T& x : data) {
         // IO is not ideal here as it might end up dominating the total cost.
         std::cout << experimental_json_builder::to_json_string(x) << std::endl;
