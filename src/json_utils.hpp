@@ -95,6 +95,21 @@ constexpr std::string atom(T t) {
   return result;
 }
 
+// Code below is needed to make things work for nested structures.
+// TODO(FranciscoThiesen): This atom function might lead to issues with STL classes, as it is unclear that they should receive the same treatment as user-defined types.
+
+template<typename T>
+concept UserDefinedType = std::is_class<T>::value;
+
+template <class T>
+  requires(UserDefinedType<T> && !ContainerButNotString<T> && !std::is_same_v<T, std::string> &&
+    !std::is_same_v<T, std::string_view> && !std::is_same_v<T, const char *>)
+constexpr std::string atom(T t) {
+  constexpr auto names = print_struct<T>();
+  auto x = struct_to_tuple<T>(t);
+  return to_json_string(names, x);
+}
+
 template <typename array, class T, size_t... i>
 std::string to_json_string(array &desc, const T &t, std::index_sequence<i...>) {
   std::string s = "{";

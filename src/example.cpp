@@ -2,6 +2,12 @@
 #include <string>
 #include <vector>
 
+struct Y {
+  int g;
+  std::string h;
+  std::vector<int> i; 
+};
+
 struct X {
   char a;
   int b;
@@ -9,6 +15,7 @@ struct X {
   std::string d;
   std::vector<int> e;
   std::vector<std::string> f;
+  Y y;
 };
 
 int main() {
@@ -17,7 +24,8 @@ int main() {
           .c = 0,
           .d = "test string\n\r\"",
           .e = {1, 2, 3},
-          .f = {"ab", "cd", "fg"}};
+          .f = {"ab", "cd", "fg"},
+          .y = {.g = 100, .h = "test string\n\r\"", .i = {1, 2, 3}}};
 
   std::cout << experimental_json_builder::to_json_string(s1) << std::endl;
   return 0;
