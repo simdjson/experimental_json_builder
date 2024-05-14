@@ -161,9 +161,10 @@ event_aggregate bench(const function_type &function, size_t min_repeat = 10,
 
 // Source of the 2 functions below:
 // https://github.com/simdutf/simdutf/blob/master/benchmarks/base64/benchmark_base64.cpp
-void pretty_print(size_t, size_t bytes, std::string name, event_aggregate agg) {
+void pretty_print(size_t strings, size_t bytes, std::string name, event_aggregate agg) {
   printf("%-40s : ", name.c_str());
-  printf(" %5.2f GB/s ", bytes / agg.elapsed_ns());
+  printf(" %5.2f MB/s ", bytes * 1000 / agg.elapsed_ns());
+  printf(" %5.2f Ms/s ", strings * 1000 / agg.elapsed_ns());
   if (collector.has_events()) {
     printf(" %5.2f GHz ", agg.cycles() / agg.elapsed_ns());
     printf(" %5.2f c/b ", agg.cycles() / bytes);
@@ -178,30 +179,40 @@ template<typename T>
 void bench(std::vector<T> &data) {
   size_t volume = std::accumulate(
       data.begin(), data.end(), size_t(0),
-      [](size_t a, const T &b) { return sizeof(b); });
+      [](size_t a, const T &b) { return a + sizeof(b); });
+  size_t output_volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const T &b) { return a + experimental_json_builder::to_json_string(b).size(); });
   size_t max_size = sizeof(std::max_element(data.begin(), data.end(),
                                      [](const T &a,
                                         const T &b) {
                                        return sizeof(a) < sizeof(b);
                                      }));
   printf("# volume: %zu bytes\n", volume);
+  printf("# output volume: %zu bytes\n", output_volume);
+
   printf("# max length: %zu bytes\n", max_size);
   printf("# number of inputs: %zu\n", data.size());
 
   printf("# serialization\n");
+  volatile size_t measured_volume = 0;
   pretty_print(
     data.size(), volume, "experimental_json_builder::to_json_string",
-    bench([&data] () {
+    bench([&data, &measured_volume, &output_volume] () {
+      measured_volume = 0;
+      ;
       for (const T& x : data) {
-        // IO is not ideal here as it might end up dominating the total cost.
-        std::cout << experimental_json_builder::to_json_string(x) << std::endl;
+        // The compiler is not smart enough to optimize the string creation.
+        std::string out = experimental_json_builder::to_json_string(x);
+        measured_volume += out.size();
       }
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
     })
   );
 }
 
 int main() {
-  constexpr int test_sz = 100'000;
+  constexpr int test_sz = 5'000;
   std::vector<User> test_data(test_sz);
   for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
   bench<User>(test_data);
