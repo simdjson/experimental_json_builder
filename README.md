@@ -73,7 +73,7 @@ Now you should be able to run the following commands (on the `experimental_json_
 
 1. Firstly, configure the build system with cmake:
 ```bash
-cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-stdlib=libc++ -freflection -std=c++26" -S src -B build
+cmake -B build
 ````
 This only needs to be done once.
 
@@ -84,7 +84,31 @@ cmake --build build
 
 3. Run the executable.
 ```bash
-./ExperimentalJsonBuilder # this runs the example available in example.cpp
+./build/src/ExperimentalJsonBuilder 
 ```
 
-You can modify the source code with your favorite editor and run again steps 2 (Build the code) and 3 (Run the executable).
+
+4. Run the benchmark.
+```bash
+./build/benchmarks/src/SerializationBenchmark
+```
+
+You can modify the source code with your favorite editor and run again steps 2 (Build the code) and 3 (Run the executable) and 4 (Run the benchmark).
+
+
+## Profiling
+
+You can profile the benchmark like so:
+
+```
+cmake --build build &&  perf record ./build/benchmarks/src/SerializationBenchmark && perf report
+```
+
+In perf is not available, you can install it like so:
+
+```
+sudo apt-get update
+sudo apt-get install linux-perf
+```
+
+Your password inside the docker container is your username.
