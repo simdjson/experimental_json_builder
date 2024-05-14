@@ -9,41 +9,6 @@
 
 namespace experimental_json_builder {
 
-constexpr std::string escape_json(std::string_view input) {
-  std::string output;
-  output.reserve(input.length());
-
-  for (auto i = 0; i < input.length(); ++i) {
-    switch (input[i]) {
-    case '"':
-      output += "\\\"";
-      break;
-    case '\b':
-      output += "\\b";
-      break;
-    case '\f':
-      output += "\\f";
-      break;
-    case '\n':
-      output += "\\n";
-      break;
-    case '\r':
-      output += "\\r";
-      break;
-    case '\t':
-      output += "\\t";
-      break;
-    case '\\':
-      output += "\\\\";
-      break;
-    default:
-      output += input[i];
-      break;
-    }
-  }
-
-  return output;
-}
 
 template <class T>
   requires(std::is_arithmetic_v<T>)
@@ -55,19 +20,25 @@ constexpr std::string atom(T t) {
 template <class T>
   requires(std::is_same_v<T, std::string>)
 constexpr std::string atom(T t) {
-  return "\"" + escape_json(t) + "\"";
+  std::string out;
+  append_quoted_and_escaped_json(t, out);
+  return out;
 }
 
 template <class T>
   requires(std::is_same_v<T, std::string_view>)
 constexpr std::string atom(T t) {
-  return "\"" + escape_json(std::string(t)) + "\"";
+  std::string out;
+  append_quoted_and_escaped_json(t, out);
+  return out;
 }
 
 template <class T>
   requires(std::is_same_v<T, const char *>)
 constexpr std::string atom(T t) {
-  return "\"" + escape_json(std::string(t)) + "\"";
+  std::string out;
+  append_quoted_and_escaped_json(std::string_view(t), out);
+  return out;
 }
 
 // Concept that checks if a type is a container but not a string (because
@@ -110,12 +81,18 @@ constexpr std::string atom(T t) {
   return to_json_string(names, x);
 }
 
+template <size_t i, class S, class T>
+inline void append_key_value(S&& fieldname, T&& value, std::string& out) {
+  out += (i == 0 ? "" : ", ");
+  append_quoted_and_escaped_json(fieldname, out);
+  out += ":";
+  out += atom(value);
+}
+
 template <typename array, class T, size_t... i>
 std::string to_json_string(array &desc, const T &t, std::index_sequence<i...>) {
   std::string s = "{";
-  std::string quote = "\"";
-  (..., (s += (i == 0 ? "" : ", ") + quote + std::string(desc[i].field_name) +
-              quote + ":" + atom(std::get<i>(t))));
+  (..., (append_key_value<i>(desc[i].field_name, std::get<i>(t), s)));
   s += "}";
   return s;
 }

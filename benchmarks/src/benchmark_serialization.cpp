@@ -183,13 +183,24 @@ void bench(std::vector<T> &data) {
   size_t output_volume = std::accumulate(
       data.begin(), data.end(), size_t(0),
       [](size_t a, const T &b) { return a + experimental_json_builder::to_json_string(b).size(); });
+  size_t max_string_length = experimental_json_builder::to_json_string(data[0]).size();
+  size_t min_string_length = max_string_length;
+  for(size_t i = 1; i < data.size(); i++) {
+    size_t this_size = experimental_json_builder::to_json_string(data[i]).size();
+    if(this_size > max_string_length) { max_string_length = this_size; }
+    if(this_size < min_string_length) { min_string_length = this_size; }
+  }
+
   size_t max_size = sizeof(std::max_element(data.begin(), data.end(),
                                      [](const T &a,
                                         const T &b) {
-                                       return sizeof(a) < sizeof(b);
+                                       return sizeof(a) > sizeof(b);
                                      }));
   printf("# volume: %zu bytes\n", volume);
   printf("# output volume: %zu bytes\n", output_volume);
+  printf("# output volume per string: %0.1f bytes\n", double(output_volume) / data.size());
+  printf("# min output volume per string: %zu bytes\n", max_string_length);
+  printf("# max output volume per string: %zu bytes\n", min_string_length);
 
   printf("# max length: %zu bytes\n", max_size);
   printf("# number of inputs: %zu\n", data.size());
@@ -197,10 +208,9 @@ void bench(std::vector<T> &data) {
   printf("# serialization\n");
   volatile size_t measured_volume = 0;
   pretty_print(
-    data.size(), volume, "experimental_json_builder::to_json_string",
+    data.size(), output_volume, "experimental_json_builder::to_json_string",
     bench([&data, &measured_volume, &output_volume] () {
       measured_volume = 0;
-      ;
       for (const T& x : data) {
         // The compiler is not smart enough to optimize the string creation.
         std::string out = experimental_json_builder::to_json_string(x);
@@ -212,7 +222,7 @@ void bench(std::vector<T> &data) {
 }
 
 int main() {
-  constexpr int test_sz = 5'000;
+  constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
   for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
   bench<User>(test_data);

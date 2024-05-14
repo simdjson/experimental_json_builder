@@ -4,7 +4,7 @@
 #include <experimental/meta>
 #include <utility>
 #include <vector>
-
+#include "json_string_escaping.hpp"
 namespace experimental_json_builder {
 
 // This leverages the workaround discussed at:

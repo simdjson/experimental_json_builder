@@ -94,3 +94,21 @@ cmake --build build
 ```
 
 You can modify the source code with your favorite editor and run again steps 2 (Build the code) and 3 (Run the executable) and 4 (Run the benchmark).
+
+
+## Profiling
+
+You can profile the benchmark like so:
+
+```
+cmake --build build &&  perf record ./build/benchmarks/src/SerializationBenchmark && perf report
+```
+
+In perf is not available, you can install it like so:
+
+```
+sudo apt-get update
+sudo apt-get install linux-perf
+```
+
+Your password inside the docker container is your username.

@@ -6,7 +6,7 @@ RUN grep deb /etc/apt/sources.list | \
 # Install compiler, python and subversion.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates gnupg \
-           build-essential cmake make python3 zlib1g wget subversion unzip ninja-build git && \
+           build-essential cmake make python3 zlib1g wget subversion unzip ninja-build git linux-perf && \
     rm -rf /var/lib/apt/lists/*
 RUN git clone --depth=1 --branch p2996  https://github.com/bloomberg/clang-p2996.git /tmp/clang-source
 RUN cmake -S /tmp/clang-source/llvm -B /tmp/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release \
