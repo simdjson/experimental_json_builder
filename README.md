@@ -66,7 +66,8 @@ We are assuming that you are running Linux or macOS. We recommend that Windows u
 Follow the following two steps:
 
 1. Make sure that you have [docker installed and running](https://docs.docker.com/engine/install/) on your system. Most Linux distributions support docker though some (like RedHat) have the equivalent (Podman). Users of Apple systems may want to [consider OrbStack](https://orbstack.dev). You do not need to familiar with docker, you just need to make sure that you are have it running.
-2. Navigate to our repository `experimental_json_builder` and run `./run_docker.sh bash`, this will enter a bash shell with access to the repo directory. Note that this will take some time when running it for the first time, since the specific container image has to be built. 
+2. Make sure that docker containers have lots of RAM (e.g., 64 GB). If the build process fails, try to increase the amount of available RAM.
+3. Navigate to our repository `experimental_json_builder` and run `./run_docker.sh bash`, this will enter a bash shell with access to the repo directory. Note that this will take some time when running it for the first time, since the specific container image has to be built. 
 
 
 Now you should be able to run the following commands (on the `experimental_json_builder/src`):
