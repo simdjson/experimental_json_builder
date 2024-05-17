@@ -1,29 +1,8 @@
 #include <experimental/meta>
-#include "reflection_utils.hpp"
 #include <format>
 #include <print>
 
-namespace __impl {
-  template<auto... vals>
-  struct replicator_type {
-    template<typename F>
-      constexpr void operator>>(F body) const {
-        (body.template operator()<vals>(), ...);
-      }
-  };
-
-  template<auto... vals>
-  replicator_type<vals...> replicator = {};
-}
-
-template<typename R>
-consteval auto expand(R range) {
-  std::vector<std::meta::info> args;
-  for (auto r : range) {
-    args.push_back(reflect_value(r));
-  }
-  return substitute(^__impl::replicator, args);
-}
+namespace experimental_json_builder {
 
 struct universal_formatter {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
@@ -53,3 +32,5 @@ struct universal_formatter {
     return out;
   }
 };
+
+} // namespace experimental_json_builder

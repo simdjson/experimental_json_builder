@@ -23,7 +23,7 @@ struct X {
 
 // template <> struct std::formatter<Y> : universal_formatter { }; -> not needed when dealing with structs
 // todo -> test the limitations of both methods with private/protected members, as well as with inheritance
-template <> struct std::formatter<X> : universal_formatter { };
+template <> struct std::formatter<X> : experimental_json_builder::universal_formatter { };
 
 int main() {
   X s1 = {.a = '1',
