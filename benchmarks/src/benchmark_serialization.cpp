@@ -279,7 +279,10 @@ int main() {
   constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
   for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
+  std::vector<std::vector<User>> in_array = {  test_data  };
+  // bench<std::vector<User>>(in_array); // currently not supported
+  bench_simpler_reflection<std::vector<User>>(in_array);
   bench<User>(test_data);
   bench_simpler_reflection<User>(test_data);
-  return 0;
+  return EXIT_SUCCESS;
 }
