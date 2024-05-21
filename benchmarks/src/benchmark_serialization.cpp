@@ -49,6 +49,8 @@ struct User {
   std::string updatedAt;
 };
 
+#include "custom_serializer.h"
+
 template <> struct std::formatter<Location> : experimental_json_builder::universal_formatter { };
 template <> struct std::formatter<Profile> : experimental_json_builder::universal_formatter { };
 template <> struct std::formatter<User> : experimental_json_builder::universal_formatter { };
@@ -275,10 +277,60 @@ void bench_simpler_reflection(std::vector<T> &data) {
 }
 
 
+void bench_custom(std::vector<User> &data) {
+  
+  size_t volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const User &b) { return a + sizeof(b); });
+  // this is going to be approximate.
+  size_t output_volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const User &b) { return a + std::format("{}", b).size(); });
+  size_t max_string_length = std::format("{}", data[0]).size();
+  size_t min_string_length = max_string_length;
+  for(size_t i = 1; i < data.size(); i++) {
+    size_t this_size = std::format("{}", data[i]).size();
+    if(this_size > max_string_length) { max_string_length = this_size; }
+    if(this_size < min_string_length) { min_string_length = this_size; }
+  }
+  std::vector<char> output(2*max_string_length); // plenty of memory.
+  output_volume = 0;
+  for (const User& x : data) {
+    output_volume += custom::serialize(x, output.data());
+  }
+  size_t max_size = sizeof(std::max_element(data.begin(), data.end(),
+                                     [](const User &a,
+                                        const User &b) {
+                                       return sizeof(a) > sizeof(b);
+                                     }));
+  printf("# volume: %zu bytes\n", volume);
+  printf("# output volume: %zu bytes\n", output_volume);
+  printf("# output volume per string: %0.1f bytes\n", double(output_volume) / data.size());
+  printf("# min output volume per string: %zu bytes\n", max_string_length);
+  printf("# max output volume per string: %zu bytes\n", min_string_length);
+
+  printf("# max length: %zu bytes\n", max_size);
+  printf("# number of inputs: %zu\n", data.size());
+
+  printf("# serialization\n");
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "experimental_json_builder::custom",
+    bench([&data, &measured_volume, &output_volume, &output] () {
+      measured_volume = 0;
+      for (const User& x : data) {
+         measured_volume += custom::serialize(x, output.data());
+      }
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
 int main() {
   constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
   for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
+  bench_custom(test_data);
   std::vector<std::vector<User>> in_array = {  test_data  };
   // bench<std::vector<User>>(in_array); // currently not supported
   bench_simpler_reflection<std::vector<User>>(in_array);
