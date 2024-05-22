@@ -230,6 +230,53 @@ void bench(std::vector<T> &data) {
 }
 
 template<typename T>
+void bench_no_alloc(std::vector<T> &data) {
+  size_t volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const T &b) { return a + sizeof(b); });
+  size_t output_volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const T &b) { return a + experimental_json_builder::to_json_string(b).size(); });
+  size_t max_string_length = experimental_json_builder::to_json_string(data[0]).size();
+  size_t min_string_length = max_string_length;
+  for(size_t i = 1; i < data.size(); i++) {
+    size_t this_size = experimental_json_builder::to_json_string(data[i]).size();
+    if(this_size > max_string_length) { max_string_length = this_size; }
+    if(this_size < min_string_length) { min_string_length = this_size; }
+  }
+
+  size_t max_size = sizeof(std::max_element(data.begin(), data.end(),
+                                     [](const T &a,
+                                        const T &b) {
+                                       return sizeof(a) > sizeof(b);
+                                     }));
+  printf("# volume: %zu bytes\n", volume);
+  printf("# output volume: %zu bytes\n", output_volume);
+  printf("# output volume per string: %0.1f bytes\n", double(output_volume) / data.size());
+  printf("# min output volume per string: %zu bytes\n", max_string_length);
+  printf("# max output volume per string: %zu bytes\n", min_string_length);
+
+  printf("# max length: %zu bytes\n", max_size);
+  printf("# number of inputs: %zu\n", data.size());
+
+  printf("# serialization\n");
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "experimental_json_builder::to_json_string with stringBuilder",
+    bench([&data, &measured_volume, &output_volume] () {
+      measured_volume = 0;
+      for (const T& x : data) {
+        auto sb = experimental_json_builder::StringBuilder();
+        // The compiler is not smart enough to optimize the string creation.
+        experimental_json_builder::to_json_string(x, sb);
+        measured_volume += sb.size();
+      }
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
+template<typename T>
 void bench_simpler_reflection(std::vector<T> &data) {
   
   size_t volume = std::accumulate(
@@ -333,8 +380,9 @@ int main() {
   bench_custom(test_data);
   std::vector<std::vector<User>> in_array = {  test_data  };
   // bench<std::vector<User>>(in_array); // currently not supported
-  bench_simpler_reflection<std::vector<User>>(in_array);
+  // bench_simpler_reflection<std::vector<User>>(in_array);
   bench<User>(test_data);
-  bench_simpler_reflection<User>(test_data);
+  bench_no_alloc<User>(test_data);
+  // bench_simpler_reflection<User>(test_data);
   return EXIT_SUCCESS;
 }
