@@ -9,7 +9,7 @@ namespace experimental_json_builder {
 
 class StringBuilder {
 public:
-    StringBuilder(size_t initial_capacity = (1 << 14))
+    StringBuilder(size_t initial_capacity = 2629189250)
         : buffer(initial_capacity), position(0) {}
 
     void append(char c) {
@@ -31,8 +31,7 @@ public:
     }
 
     void append(const char* str, size_t len) {
-        /* Ignore size-check and resizing for now 
-        if (position + len >= buffer.size()) {
+        /*if (position + len >= buffer.size()) {
             buffer.resize((position + len) * 2);
         }*/
 

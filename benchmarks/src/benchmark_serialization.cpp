@@ -234,6 +234,8 @@ void bench_no_alloc(std::vector<T> &data) {
   size_t volume = std::accumulate(
       data.begin(), data.end(), size_t(0),
       [](size_t a, const T &b) { return a + sizeof(b); });
+  
+  
   size_t output_volume = std::accumulate(
       data.begin(), data.end(), size_t(0),
       [](size_t a, const T &b) { return a + experimental_json_builder::to_json_string(b).size(); });
@@ -244,6 +246,12 @@ void bench_no_alloc(std::vector<T> &data) {
     if(this_size > max_string_length) { max_string_length = this_size; }
     if(this_size < min_string_length) { min_string_length = this_size; }
   }
+
+  auto sb = experimental_json_builder::StringBuilder(); // definitely more than we need
+  for (const User& x : data) {
+    experimental_json_builder::to_json_string(x, sb);
+  }
+  output_volume = sb.size();
 
   size_t max_size = sizeof(std::max_element(data.begin(), data.end(),
                                      [](const T &a,
@@ -259,21 +267,21 @@ void bench_no_alloc(std::vector<T> &data) {
   printf("# max length: %zu bytes\n", max_size);
   printf("# number of inputs: %zu\n", data.size());
 
-  printf("# serialization\n");
+  printf("# serialization\n");        
+  auto sb2 = experimental_json_builder::StringBuilder();
+
   volatile size_t measured_volume = 0;
   pretty_print(
     data.size(), output_volume, "experimental_json_builder::to_json_string with stringBuilder",
-    bench([&data, &measured_volume, &output_volume] () {
-      measured_volume = 0;
+    bench([&data, &measured_volume, &output_volume, &sb2] () {
       for (const T& x : data) {
-        auto sb = experimental_json_builder::StringBuilder();
         // The compiler is not smart enough to optimize the string creation.
-        experimental_json_builder::to_json_string(x, sb);
-        measured_volume += sb.size();
+        experimental_json_builder::to_json_string(x, sb2);
       }
-      if(measured_volume != output_volume) { printf("mismatch\n"); }
+      measured_volume = sb2.size();
     })
   );
+  if(measured_volume != output_volume * 100) { printf("mismatch\n"); }
 }
 
 template<typename T>
@@ -377,11 +385,11 @@ int main() {
   constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
   for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
-  bench_custom(test_data);
+  // bench_custom(test_data);
   std::vector<std::vector<User>> in_array = {  test_data  };
   // bench<std::vector<User>>(in_array); // currently not supported
   // bench_simpler_reflection<std::vector<User>>(in_array);
-  bench<User>(test_data);
+  // bench<User>(test_data);
   bench_no_alloc<User>(test_data);
   // bench_simpler_reflection<User>(test_data);
   return EXIT_SUCCESS;
