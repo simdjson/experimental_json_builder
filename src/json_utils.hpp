@@ -4,6 +4,7 @@
 #include "reflection_utils.hpp"
 #include <iostream>
 #include <string>
+#include <charconv>
 #include <string_view>
 #include <type_traits>
 
@@ -129,11 +130,21 @@ template <class Z> std::string to_json_string(Z z) {
    strings.
 */
 
+char global_numeric_buffer[512];
+
+template <class T>
+requires(std::is_arithmetic_v<T>)
+constexpr void atom(T t, StringBuilder& sb) {
+    auto [ptr, ec] = std::to_chars(global_numeric_buffer, global_numeric_buffer + sizeof(global_numeric_buffer), t);
+    sb.append(global_numeric_buffer, ptr - global_numeric_buffer);
+}
+
+/*
 template <class T>
 requires(std::is_arithmetic_v<T>)
 constexpr void atom(T t, StringBuilder& sb) {
     sb.append(std::to_string(t));
-}
+}*/
 
 template <class T>
 requires(std::is_same_v<T, std::string>)
@@ -147,10 +158,16 @@ constexpr void atom(T t, StringBuilder& sb) {
     append_quoted_and_escaped_json(t, sb);
 }
 
+/*
 template <class T>
 requires(std::is_same_v<T, const char*>)
 constexpr void atom(T t, StringBuilder& sb) {
     append_quoted_and_escaped_json(std::string_view(t), sb);
+}*/
+template <class T>
+requires(std::is_same_v<T, const char*>)
+constexpr void atom(T t, StringBuilder& sb) {
+    append_quoted_and_escaped_json(t, sb);
 }
 
 template <class T>
@@ -178,7 +195,7 @@ constexpr void atom(T t, StringBuilder& sb) {
 template <size_t i, class S, class T>
 inline void append_key_value(S&& fieldname, T&& value, StringBuilder& sb) {
     if (i > 0) {
-        sb.append(std::string_view(", "));
+        sb.append(", ");
     }
     append_quoted_and_escaped_json(fieldname, sb);
     sb.append(':');
