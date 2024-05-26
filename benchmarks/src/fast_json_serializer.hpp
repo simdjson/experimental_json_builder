@@ -244,7 +244,7 @@ template <typename S> consteval auto print_struct() {
 template <typename T> constexpr auto struct_to_tuple(T const &t) {
   return [:expand_all(std::meta::nonstatic_data_members_of(^T)
                       ):] >> [&]<auto... members> {
-    return std::make_tuple(t.[:members:]...);
+    return std::make_tuple(std::cref(t.[:members:])...);
   };
 }
 
