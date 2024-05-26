@@ -78,30 +78,37 @@ constexpr void escape_json_char(char c, char *&out) {
   }
 }
 
-constexpr inline size_t write_string_escaped(std::string_view input,
-                                             char *out) {
-  if(!needs_escaping(input)) { // fast path!
-    memcpy(out, input.data(), input.size());
-    return input.size();
-  }
+constexpr inline size_t write_string_escaped(std::string_view input, char *out) {
   const char *const initout = out;
-  size_t location = find_next_json_quotable_character(input, 0);
-  memcpy(out, input.data(), location);
-  out += location;
-  input.remove_prefix(location);
-  escape_json_char(input[0], out);
-  input.remove_prefix(1);
-  // could be optimized in various ways
-  while (!input.empty()) {
-    location = find_next_json_quotable_character(input, 0);
-    memcpy(out, input.data(), location);
-    out += location;
-    input.remove_prefix(location);
-    escape_json_char(input[0], out);
-    input.remove_prefix(1);
+  const char *start = input.data();
+  const char *end = start + input.size();
+  const char *next_quotable = start;
+
+  while (next_quotable != end) {
+      // Find next character that needs escaping
+    next_quotable = std::find_if(next_quotable, end, [](char c) {
+      return json_quotable_character[static_cast<uint8_t>(c)];
+    });
+
+    // Copy characters up to the next quotable character
+    if (next_quotable != start) {
+      size_t chunk_size = next_quotable - start;
+      std::memcpy(out, start, chunk_size);
+      out += chunk_size;
+      start = next_quotable;
+    }
+
+    if (next_quotable != end) {
+      // Escape the quotable character
+      escape_json_char(*next_quotable, out);
+      start++;
+      next_quotable++;
+    }
   }
+
   return out - initout;
 }
+
 
 // unoptimized, meant for compile-time execution
 consteval std::string to_quoted_escaped(std::string_view input) {
@@ -250,7 +257,7 @@ template <typename T> constexpr auto struct_to_tuple(T const &t) {
 
 template <class T>
   requires(ContainerButNotString<T>)
-constexpr void atom(StringBuilder &b, T& t) {
+constexpr void atom(StringBuilder &b, const T& t) {
   b.append('[');
   for (size_t i = 0; i < t.size(); ++i) {
     atom(b, t[i]);
@@ -280,7 +287,7 @@ template <class T>
            !std::is_same_v<T, std::string> &&
            !std::is_same_v<T, std::string_view> &&
            !std::is_same_v<T, const char *>)
-constexpr void atom(StringBuilder &b, T &t) {
+constexpr void atom(StringBuilder &b, const T &t) {
   constexpr auto names = print_struct<T>();
   auto x = struct_to_tuple<T>(t);
   return fast_to_json_string(b, names, x);
@@ -311,7 +318,7 @@ void fast_to_json_string(StringBuilder &b, array &desc,
 }
 
 // works for struct
-template <class Z> void fast_to_json_string(StringBuilder &b, Z &z) {
+template <class Z> void fast_to_json_string(StringBuilder &b, const Z &z) {
   constexpr static auto names = print_struct<Z>();
   auto x = struct_to_tuple<Z>(z);
   fast_to_json_string(b, names, x);
@@ -320,7 +327,7 @@ template <class Z> void fast_to_json_string(StringBuilder &b, Z &z) {
 // works for container
 template <class Z>
   requires(ContainerButNotString<Z>)
-void fast_to_json_string(StringBuilder &b, Z &z) {
+void fast_to_json_string(StringBuilder &b, const Z &z) {
   b.append('[');
   for (size_t i = 0; i < z.size(); ++i) {
     atom(b, z[i]);

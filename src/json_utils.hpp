@@ -215,7 +215,7 @@ void to_json_string(array& desc, const std::tuple<T...>& t, StringBuilder& sb) {
 }
 
 template <class Z>
-void to_json_string(Z z, StringBuilder& sb) {
+void to_json_string(const Z& z, StringBuilder& sb) {
     constexpr auto names = print_struct<Z>();
     auto x = struct_to_tuple<Z>(z);
     to_json_string(names, x, sb);
