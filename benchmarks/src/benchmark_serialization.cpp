@@ -461,7 +461,7 @@ void bench_fast_one_by_one_v2(std::vector<T> &data) {
 
   volatile size_t measured_volume = 0;
   pretty_print(
-    data.size(), output_volume, "bench_fast_one_by_one",
+    data.size(), output_volume, "bench_fast_one_by_one_v2",
     bench([&data, &measured_volume, &output_volume, &b] () {
       b.reset();
       for(T& t: data) {
