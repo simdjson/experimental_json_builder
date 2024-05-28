@@ -1,5 +1,6 @@
 #include "fast_json_serializer.hpp"
 #include "fast_json_serializer2.hpp"
+#include "fast_json_serializer_simpler.hpp"
 #include "../../src/json_utils.hpp"
 #include "../../src/simpler_reflection.hpp"
 #include "event_counter.h"
@@ -403,6 +404,27 @@ void bench_fast(std::vector<T> &data) {
   );
 }
 
+
+template <class T>
+void bench_fast_simpler(std::vector<T> &data) {
+  fast_json_serializer_simpler::StringBuilder b;
+  fast_json_serializer_simpler::fast_to_json_string(b, data);
+  size_t output_volume = b.size();
+  b.reset();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "bench_fast_simpler",
+    bench([&data, &measured_volume, &output_volume, &b] () {
+      b.reset();
+      fast_json_serializer_simpler::fast_to_json_string(b, data);
+      measured_volume = b.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
 template <class T>
 void bench_fast_v2(std::vector<T> &data) {
   fast_json_serializer2::StringBuilder b;
@@ -485,6 +507,7 @@ int main() {
   // bench_no_alloc<User>(test_data);
   // bench_simpler_reflection<User>(test_data);
   bench_custom(test_data);
+  bench_fast_simpler(test_data);
   bench_fast(test_data);
   bench_fast_v2(test_data);
   bench_fast_one_by_one(test_data);
