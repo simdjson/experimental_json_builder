@@ -1,3 +1,6 @@
+#include "fast_json_serializer.hpp"
+#include "fast_json_serializer2.hpp"
+#include "fast_json_serializer_simpler.hpp"
 #include "../../src/json_utils.hpp"
 #include "../../src/simpler_reflection.hpp"
 #include "event_counter.h"
@@ -170,7 +173,7 @@ event_aggregate bench(const function_type &function, size_t min_repeat = 10,
 // Source of the 2 functions below:
 // https://github.com/simdutf/simdutf/blob/master/benchmarks/base64/benchmark_base64.cpp
 void pretty_print(size_t strings, size_t bytes, std::string name, event_aggregate agg) {
-  printf("%-40s : ", name.c_str());
+  printf("%-60s : ", name.c_str());
   printf(" %5.2f MB/s ", bytes * 1000 / agg.elapsed_ns());
   printf(" %5.2f Ms/s ", strings * 1000 / agg.elapsed_ns());
   if (collector.has_events()) {
@@ -227,6 +230,61 @@ void bench(std::vector<T> &data) {
       if(measured_volume != output_volume) { printf("mismatch\n"); }
     })
   );
+}
+
+template<typename T>
+void bench_no_alloc(std::vector<T> &data) {
+  size_t volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const T &b) { return a + sizeof(b); });
+  
+  
+  size_t output_volume = std::accumulate(
+      data.begin(), data.end(), size_t(0),
+      [](size_t a, const T &b) { return a + experimental_json_builder::to_json_string(b).size(); });
+  size_t max_string_length = experimental_json_builder::to_json_string(data[0]).size();
+  size_t min_string_length = max_string_length;
+  for(size_t i = 1; i < data.size(); i++) {
+    size_t this_size = experimental_json_builder::to_json_string(data[i]).size();
+    if(this_size > max_string_length) { max_string_length = this_size; }
+    if(this_size < min_string_length) { min_string_length = this_size; }
+  }
+
+  auto sb = experimental_json_builder::StringBuilder(); // definitely more than we need
+  for (const User& x : data) {
+    experimental_json_builder::to_json_string(x, sb);
+  }
+  output_volume = sb.size();
+
+  size_t max_size = sizeof(std::max_element(data.begin(), data.end(),
+                                     [](const T &a,
+                                        const T &b) {
+                                       return sizeof(a) > sizeof(b);
+                                     }));
+  printf("# volume: %zu bytes\n", volume);
+  printf("# output volume: %zu bytes\n", output_volume);
+  printf("# output volume per string: %0.1f bytes\n", double(output_volume) / data.size());
+  printf("# min output volume per string: %zu bytes\n", max_string_length);
+  printf("# max output volume per string: %zu bytes\n", min_string_length);
+
+  printf("# max length: %zu bytes\n", max_size);
+  printf("# number of inputs: %zu\n", data.size());
+
+  printf("# serialization\n");        
+  auto sb2 = experimental_json_builder::StringBuilder();
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "experimental_json_builder::to_json_string with stringBuilder",
+    bench([&data, &measured_volume, &output_volume, &sb2] () {
+      for (const T& x : data) {
+        // The compiler is not smart enough to optimize the string creation.
+        experimental_json_builder::to_json_string(x, sb2);
+      }
+      measured_volume = sb2.size();
+    })
+  );
+  if(measured_volume != output_volume * 100) { printf("mismatch\n"); }
 }
 
 template<typename T>
@@ -326,15 +384,134 @@ void bench_custom(std::vector<User> &data) {
   );
 }
 
+template <class T>
+void bench_fast(std::vector<T> &data) {
+  fast_json_serializer::StringBuilder b;
+  fast_json_serializer::fast_to_json_string(b, data);
+  size_t output_volume = b.size();
+  b.reset();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "bench_fast",
+    bench([&data, &measured_volume, &output_volume, &b] () {
+      b.reset();
+      fast_json_serializer::fast_to_json_string(b, data);
+      measured_volume = b.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
+
+template <class T>
+void bench_fast_simpler(std::vector<T> &data) {
+  fast_json_serializer_simpler::StringBuilder b;
+  fast_json_serializer_simpler::fast_to_json_string(b, data);
+  size_t output_volume = b.size();
+  b.reset();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "bench_fast_simpler",
+    bench([&data, &measured_volume, &output_volume, &b] () {
+      b.reset();
+      fast_json_serializer_simpler::fast_to_json_string(b, data);
+      measured_volume = b.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
+template <class T>
+void bench_fast_v2(std::vector<T> &data) {
+  fast_json_serializer2::StringBuilder b;
+  fast_json_serializer2::fast_to_json_string(b, data);
+  size_t output_volume = b.size();
+  b.reset();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "bench_fast_v2",
+    bench([&data, &measured_volume, &output_volume, &b] () {
+      b.reset();
+      fast_json_serializer2::fast_to_json_string(b, data);
+      measured_volume = b.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
+
+template <class T>
+void bench_fast_one_by_one(std::vector<T> &data) {
+  fast_json_serializer::StringBuilder b;
+  for(T& t: data) {
+    fast_json_serializer::fast_to_json_string(b, t);
+  }
+  size_t output_volume = b.size();
+  b.reset();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "bench_fast_one_by_one",
+    bench([&data, &measured_volume, &output_volume, &b] () {
+      b.reset();
+      for(T& t: data) {
+        fast_json_serializer::fast_to_json_string(b, t);
+      }
+      measured_volume = b.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
+
+template <class T>
+void bench_fast_one_by_one_v2(std::vector<T> &data) {
+  fast_json_serializer2::StringBuilder b;
+  for(T& t: data) {
+    fast_json_serializer2::fast_to_json_string(b, t);
+  }
+  size_t output_volume = b.size();
+  b.reset();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "bench_fast_one_by_one_v2",
+    bench([&data, &measured_volume, &output_volume, &b] () {
+      b.reset();
+      for(T& t: data) {
+        fast_json_serializer2::fast_to_json_string(b, t);
+      }
+      measured_volume = b.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
 int main() {
   constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
   for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
-  bench_custom(test_data);
+  
   std::vector<std::vector<User>> in_array = {  test_data  };
   // bench<std::vector<User>>(in_array); // currently not supported
-  bench_simpler_reflection<std::vector<User>>(in_array);
-  bench<User>(test_data);
-  bench_simpler_reflection<User>(test_data);
+  // bench_simpler_reflection<std::vector<User>>(in_array);
+  // bench<User>(test_data);
+  // bench_no_alloc<User>(test_data);
+  // bench_simpler_reflection<User>(test_data);
+  bench_custom(test_data);
+  bench_fast_simpler(test_data);
+  bench_fast(test_data);
+  bench_fast_v2(test_data);
+  bench_fast_one_by_one(test_data);
+  bench_fast_one_by_one_v2(test_data);
+
   return EXIT_SUCCESS;
 }

@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include "string_builder.hpp"
 
 static constexpr std::array<uint8_t, 256> json_quotable_character =
     []() constexpr {
@@ -53,6 +54,17 @@ constexpr void escape_json_char(char c, std::string &out) {
   }
 }
 
+// Append to output the escaped version of c using StringBuilder.
+constexpr void escape_json_char(char c, experimental_json_builder::StringBuilder &sb) {
+  if (c == '"') {
+    sb.append("\\\"");
+  } else if (c == '\\') {
+    sb.append("\\\\");
+  } else {
+    sb.append(control_chars[uint8_t(c)]);
+  }
+}
+
 constexpr void append_quoted_and_escaped_json(std::string_view input,
                                               std::string &out) {
   out.append("\"");
@@ -75,4 +87,28 @@ constexpr void append_quoted_and_escaped_json(std::string_view input,
     }
   }
   out.append("\"");
+}
+
+constexpr void append_quoted_and_escaped_json(std::string_view input,
+                                              experimental_json_builder::StringBuilder &sb) {
+  sb.append('"');
+  size_t location = find_next_json_quotable_character(input, 0);
+  if (location == input.size()) {
+    // no escaping (fast path)
+    sb.append(input);
+  } else {
+    sb.append(input.substr(0, location));
+    input.remove_prefix(location);
+    escape_json_char(input[0], sb);
+    input.remove_prefix(1);
+    // could be optimized in various ways
+    while (!input.empty()) {
+      location = find_next_json_quotable_character(input, 0);
+      sb.append(input.substr(0, location));
+      input.remove_prefix(location);
+      escape_json_char(input[0], sb);
+      input.remove_prefix(1);
+    }
+  }
+  sb.append('"');
 }
