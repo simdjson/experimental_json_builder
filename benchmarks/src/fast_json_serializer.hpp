@@ -103,7 +103,6 @@ constexpr inline size_t write_string_escaped(std::string_view input,
   return out - initout;
 }
 
-
 // unoptimized, meant for compile-time execution
 consteval std::string to_quoted_escaped(std::string_view input) {
   std::string out = "\"";
@@ -245,7 +244,7 @@ template <typename S> consteval auto print_struct() {
 template <typename T> constexpr auto struct_to_tuple(T const &t) {
   return [:expand_all(std::meta::nonstatic_data_members_of(^T)
                       ):] >> [&]<auto... members> {
-    return std::make_tuple(t.[:members:]...);
+    return std::make_tuple(std::cref(t.[:members:])...);
   };
 }
 
