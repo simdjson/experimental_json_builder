@@ -74,7 +74,7 @@ Now you should be able to run the following commands (on the `experimental_json_
 1. Firstly, configure the build system with cmake:
 ```bash
 cmake -B build
-````
+```
 This only needs to be done once.
 
 2. Build the code...
@@ -95,6 +95,125 @@ cmake --build build
 
 You can modify the source code with your favorite editor and run again steps 2 (Build the code) and 3 (Run the executable) and 4 (Run the benchmark).
 
+## Instructions for running it natively on macOS
+
+Here are the step-by-step instructions:
+
+### 1. Install Homebrew
+
+If you don't already have Homebrew installed, install it by running:
+
+```
+/bin/bash -c "$(curl -fsSL <https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh>)"
+
+```
+
+### 2. Install Necessary Packages
+
+Use Homebrew to install the necessary packages:
+
+```
+brew install cmake ninja git python3
+
+```
+
+### 3. Clone the Clang Source Code
+
+Clone the Clang source code from the experimental branch:
+
+```
+git clone --depth=1 --branch p2996 <https://github.com/bloomberg/clang-p2996.git> ~/clang-source
+
+```
+
+### 4. Create a Build Directory
+
+Create a build directory and navigate to it:
+
+```
+mkdir ~/clang-source/build-llvm
+cd ~/clang-source/build-llvm
+
+```
+
+### 5. Configure the Build
+
+Configure the LLVM/Clang build with CMake:
+
+```
+cmake -S ~/clang-source/llvm -B ~/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release \\
+    -DLLVM_ENABLE_ASSERTIONS=ON \\
+    -DLLVM_UNREACHABLE_OPTIMIZE=ON \\
+    -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \\
+    -DCLANG_DEFAULT_CXX_STDLIB=libc++ \\
+    -DLLVM_ENABLE_PROJECTS=clang -G Ninja
+
+```
+
+### 6. Build LLVM/Clang
+
+Build LLVM/Clang with Ninja:
+
+```
+ninja
+
+```
+
+### 7. Install LLVM/Clang
+
+Install LLVM/Clang to a desired prefix (e.g., `/usr/local`):
+
+```
+sudo ninja install
+
+```
+
+### 8. Configure the Dynamic Linker
+
+On macOS, you usually don't need to manually configure the dynamic linker paths as you do on Linux. The installation step should have placed the necessary libraries in standard locations. However, if needed, you can set up your environment to point to the correct library paths.
+
+For example, you can add the library path to your `.bashrc` or `.zshrc` file:
+
+```
+echo 'export LIBRARY_PATH=/usr/local/lib:$LIBRARY_PATH' >> ~/.bashrc
+source ~/.bashrc
+
+```
+
+### 9. Verify the Installation
+
+Verify that `clang` and `clang++` are correctly installed and working:
+
+```
+clang++ --version
+
+```
+
+You should see output indicating that you're using the custom build of Clang/LLVM. (bloomberg experimental)
+
+### 10. Running the project
+
+Now you must run the following comments (that are exactly the same from the docker instructions)
+
+1. Firstly, configure the build system with cmake:
+```bash
+cmake -B build
+```
+This only needs to be done once.
+
+2. Build the code...
+```bash
+cmake --build build
+```
+
+3. Run the benchmark.
+```bash
+./build/benchmarks/src/SerializationBenchmark
+````
+
+### Additional comments regarding running natively on macOS
+1. There is a linker issue when trying to generate the ExperimentalJsonBuilder target (generated based on the _example.cpp_ file). So for now I have removed it from the makefile.
+2. For now we don't have any macOS compatible instructons for profiling. This will be added later on.
 
 ## Profiling
 
