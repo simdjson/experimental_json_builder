@@ -235,16 +235,15 @@ void bench_custom(std::vector<User> &data) {
 
 void bench_custom(std::vector<User> &data) {
   size_t volume = std::accumulate(data.begin(), data.end(), size_t(0), [](size_t a, const User &b) { return a + sizeof(b); });
+  std::vector<char> buff(8192);
 
-  size_t output_volume = std::accumulate(data.begin(), data.end(), size_t(0), [&sb](size_t a, const User &b) {
-    experimental_json_builder::fast_to_json_string(sb, b);
-    return sb.size();
+  size_t output_volume = std::accumulate(data.begin(), data.end(), size_t(0), [&buff](size_t a, const User &b) {
+    return a + custom::serialize(b, buff.data());
   });
 
-  size_t max_string_length = experimental_json_builder::StringBuilder().size();
+  size_t max_string_length = custom::serialize(data[0], buff.data());
   size_t min_string_length = max_string_length;
 
-  std::vector<char> buff(8192);
   for (size_t i = 1; i < data.size(); i++) {
     size_t this_size = custom::serialize(data[i], buff.data());
     if (this_size > max_string_length) { max_string_length = this_size; }

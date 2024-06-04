@@ -5,6 +5,7 @@
 #include <cstring>
 #include <experimental/meta>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -77,10 +78,10 @@ constexpr void atom(StringBuilder &b, const T t) {
   b.append(t);
 }
 
-// We probably can do better (and have to include other arithmetic types)
+// Mostly to unblock example.cpp, we can probably do much better
 template <class T>
-  requires(std::is_same_v<T, int>)
-constexpr void atom(StringBuilder &b, const T t) {
+  requires(std::is_arithmetic_v<T> && !std::is_same_v<T, double>)
+constexpr void atom(StringBuilder &b, const T& t) {
   b.append(std::to_string(t));
 }
 
