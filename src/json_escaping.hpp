@@ -1,5 +1,8 @@
+#pragma once
 #include <array>
 #include <cstdint>
+#include <string_view>
+#include <string>
 
 #if defined(__SSE2__) || defined(__x86_64__) || defined(__x86_64) ||           \
     (defined(_M_AMD64) || defined(_M_X64) ||                                   \
