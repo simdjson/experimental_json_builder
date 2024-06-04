@@ -77,6 +77,13 @@ constexpr void atom(StringBuilder &b, const T t) {
   b.append(t);
 }
 
+// We probably can do better (and have to include other arithmetic types)
+template <class T>
+  requires(std::is_same_v<T, int>)
+constexpr void atom(StringBuilder &b, const T t) {
+  b.append(std::to_string(t));
+}
+
 template <class T>
   requires(UserDefinedType<T> && !ContainerButNotString<T> &&
            !std::is_same_v<T, std::string> &&

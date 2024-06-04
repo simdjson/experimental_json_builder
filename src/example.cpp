@@ -1,9 +1,11 @@
-#include "json_utils.hpp"
-#include "simpler_reflection.hpp"
+#include "experimental_json_builder.hpp"
+#include "string_builder.hpp"
+#include "universal_formatter_misc.hpp"
 #include <string>
 #include <vector>
 #include <format>
 #include <print>
+#include <iostream>
 
 struct Y {
   int g;
@@ -34,9 +36,12 @@ int main() {
           .f = {"ab", "cd", "fg"},
           .y = {.g = 100, .h = "test string\n\r\"", .i = {1, 2, 3}}};
 
-  std::cout << experimental_json_builder::to_json_string(s1) << std::endl << std::endl;
+  experimental_json_builder::StringBuilder sb;
+  experimental_json_builder::fast_to_json_string(sb, s1);
+  std::cout << sb.c_str() << std::endl;
+  // std::cout << experimental_json_builder::fast_to_json_string(sb,s1) << std::endl << std::endl;
 
-  std::println("{}", s1);
+  // std::println("{}", s1);
 
   return 0;
 }
