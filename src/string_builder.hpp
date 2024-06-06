@@ -9,63 +9,64 @@ namespace experimental_json_builder {
 
 class StringBuilder {
 public:
-    StringBuilder(size_t initial_capacity = 2629189250)
-        : buffer(initial_capacity), position(0) {}
+  StringBuilder(size_t initial_capacity = 2629189250)
+      : buffer(new char[initial_capacity]), position(0),
+        capacity(initial_capacity) {}
+  inline void append(double v) {
+    auto [ptr, ec] =
+        std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
+    (void)ec; // no error handling
+    position = ptr - buffer.get();
+  }
 
-    void append(char c) {
-        /* Ignoring size-checks for now
-        if (position >= buffer.size()) {
-            buffer.resize(buffer.size() * 2);
-        }*/
-        buffer[position++] = c;
-    }
+  inline void append(char c) { buffer[position++] = c; }
 
-    /*
-    void append(const std::string& str) {
-        append(str.data(), str.size());
-    }*/
+  void reset() { position = 0; }
 
-    
-    void append(std::string_view str) {
-        append(str.data(), str.size());
-    }
+  inline void append_escaped_json(std::string_view input) {
+    position += simdjson::experimental::json_escaping::write_string_escaped(
+        input, buffer.get() + position);
+  }
 
-    void append(const char* str, size_t len) {
-        /*if (position + len >= buffer.size()) {
-            buffer.resize((position + len) * 2);
-        }*/
+  inline void append_quoted_escaped_json(std::string_view input) {
+    buffer[position++] = '"';
+    position += simdjson::experimental::json_escaping::write_string_escaped(
+        input, buffer.get() + position);
+    buffer[position++] = '"';
+  }
 
-        std::memcpy(buffer.data() + position, str, len);
-        position += len;
-    }
+  inline void append(std::string_view v) { append_quoted_escaped_json(v); }
 
-    /* Not interested in format right now, since it didn't work in first attempts
-    template<typename... Args>
-    void append_format(const std::string& format, Args&&... args) {
-        std::string formatted = std::vformat(format, std::make_format_args(std::forward<Args>(args)...));
-        append(formatted);
-    }*/
+  inline void append_unescaped(const char *c) {
+    append_unescaped(std::string_view(c));
+  }
 
-    std::string str() const {
-        return std::string(buffer.data(), position);
-    }
+  inline void append_unescaped(std::string_view str) {
+    append_unescaped(str.data(), str.size());
+  }
 
-    const char* c_str() {
-        /* Ignore size-checks for now
-        if (position >= buffer.size()) {
-            buffer.resize(buffer.size() + 1);
-        }*/
-        buffer[position] = '\0'; // Ensure null-termination
-        return buffer.data();
-    }
+  inline void append_unescaped(const char *str, size_t len) {
+    std::memcpy(buffer.get() + position, str, len);
+    position += len;
+  }
 
-    size_t size() const {
-        return position;
-    }
+  std::string_view view() const {
+    return std::string_view(buffer.get(), position);
+  }
+
+  const char *c_str() {
+    buffer[position] = '\0'; // Ensure null-termination
+    return buffer.get();
+  }
+
+  size_t size() const { return position; }
+
+  void clear() { position = 0; }
 
 private:
-    std::vector<char> buffer;
-    size_t position;
+  std::unique_ptr<char[]> buffer;
+  size_t position;
+  size_t capacity;
 };
 
 } // namespace experimental_json_builder
