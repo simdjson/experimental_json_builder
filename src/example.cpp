@@ -39,6 +39,7 @@ int main() {
   experimental_json_builder::StringBuilder sb;
   experimental_json_builder::fast_to_json_string(sb, s1);
   std::cout << sb.c_str() << std::endl;
+  
   // std::cout << experimental_json_builder::fast_to_json_string(sb,s1) << std::endl << std::endl;
 
   // std::println("{}", s1);
