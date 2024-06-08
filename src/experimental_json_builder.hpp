@@ -72,17 +72,9 @@ constexpr void atom(StringBuilder &b, const T &t) {
   b.append(t);
 }
 
-template <class T>
-  requires(std::is_same_v<T, double>)
+template <arithmetic T>
 constexpr void atom(StringBuilder &b, const T t) {
   b.append(t);
-}
-
-// Mostly to unblock example.cpp, we can probably do much better
-template <class T>
-  requires(std::is_arithmetic_v<T> && !std::is_same_v<T, double>)
-constexpr void atom(StringBuilder &b, const T& t) {
-  b.append(std::to_string(t));
 }
 
 template <class T>
