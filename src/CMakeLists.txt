@@ -14,8 +14,8 @@ set(CMAKE_CXX_COMPILER clang++)
 include_directories(${CMAKE_SOURCE_DIR})
 
 # Add executable target
-add_executable(ExperimentalJsonBuilder example.cpp)
-add_executable(ExperimentalDeserialization example2.cpp)
+add_executable(ExperimentalJsonBuilder ../examples/example.cpp)
+add_executable(ExperimentalDeserialization ../examples/example2.cpp)
 
 
 add_library(simdjson-serial INTERFACE)
