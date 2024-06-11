@@ -19,7 +19,7 @@ add_executable(ExperimentalDeserialization ../examples/example2.cpp)
 
 
 add_library(simdjson-serial INTERFACE)
-target_include_directories(simdjson-serial INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+target_include_directories(simdjson-serial INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_compile_options(ExperimentalJsonBuilder PRIVATE -freflection -stdlib=libc++ -std=c++26)
 target_compile_options(ExperimentalDeserialization PRIVATE -freflection -stdlib=libc++ -std=c++26)

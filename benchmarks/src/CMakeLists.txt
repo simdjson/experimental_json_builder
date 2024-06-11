@@ -18,8 +18,9 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 # Add executable target
 add_executable(SerializationBenchmark benchmark_serialization.cpp)
-# target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial)
 
 target_compile_options(SerializationBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
 # If you have any libraries to link (e.g., if your project grows and you decide to compile some parts into a library),
 # you would specify them here with target_link_libraries(MyLibraryExample mylib)
+
+target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial nlohmann_json::nlohmann_json simdjson::simdjson)

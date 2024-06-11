@@ -209,7 +209,15 @@ cmake --build build
 3. Run the benchmark.
 ```bash
 ./build/benchmarks/src/SerializationBenchmark
-````
+```
+
+### Running tests
+
+```bash
+cmake -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
 
 ### Additional comments regarding running natively on macOS
 1. There is a linker issue when trying to generate the ExperimentalJsonBuilder target (generated based on the _example.cpp_ file). So for now I have removed it from the makefile.
