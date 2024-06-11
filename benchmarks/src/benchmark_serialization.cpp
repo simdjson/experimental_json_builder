@@ -1,6 +1,6 @@
-#include "../../src/experimental_json_builder.hpp"
-#include "../../src/json_escaping.hpp"
-#include "../../src/universal_formatter_misc.hpp"
+#include "experimental_json_builder.hpp"
+#include "json_escaping.hpp"
+#include "universal_formatter_misc.hpp"
 #include "event_counter.h"
 #include <algorithm>
 #include <chrono>
@@ -11,46 +11,9 @@
 #include <vector>
 #include <format>
 #include <atomic>
-
-
-/* This struct is based on one example from the
- * https://app.json-generator.com/9jQKNGW0cMIA */
-
-struct Location {
-  double lat;
-  double lng;
-};
-
-struct Profile {
-  std::string name;
-  std::string company;
-  std::string dob;
-  std::string address;
-  Location location;
-  std::string about;
-};
-
-struct User {
-  std::string id;
-  std::string email;
-  std::string username;
-  /*
-  struct Profile {
-    std::string name;
-    std::string company;
-    std::string dob;
-    std::string address;
-    Location location;
-    std::string about;
-  } profile;*/
-  Profile profile;
-  std::string apiKey;
-  std::vector<std::string> roles;
-  std::string createdAt;
-  std::string updatedAt;
-};
-
+#include "user_profile.hpp"
 #include "custom_serializer.h"
+#include "nlohmann_user_profile.hpp"
 
 template <> struct std::formatter<Location> : experimental_json_builder::universal_formatter { };
 template <> struct std::formatter<Profile> : experimental_json_builder::universal_formatter { };
@@ -254,12 +217,31 @@ void bench_fast_simpler(std::vector<T> &data) {
   );
 }
 
+
+void bench_nlohmann(std::vector<User> &data) {
+  std::string output = nlohmann_serialize(data);
+  size_t output_volume = output.size();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    data.size(), output_volume, "bench_nlohmann",
+    bench([&data, &measured_volume, &output_volume] () {
+      std::string output = nlohmann_serialize(data);
+      measured_volume = output.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
+
 int main() {
   constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
   for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
   
   std::vector<std::vector<User>> in_array = {  test_data  };
+  bench_nlohmann(test_data);
   bench_custom(test_data);
   bench_fast_simpler(test_data);
 
