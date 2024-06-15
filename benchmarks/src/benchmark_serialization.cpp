@@ -1,6 +1,5 @@
 #include "experimental_json_builder.hpp"
 #include "json_escaping.hpp"
-#include "universal_formatter_misc.hpp"
 #include "event_counter.h"
 #include <algorithm>
 #include <chrono>
@@ -14,10 +13,6 @@
 #include "user_profile.hpp"
 #include "custom_serializer.h"
 #include "nlohmann_user_profile.hpp"
-
-template <> struct std::formatter<Location> : experimental_json_builder::universal_formatter { };
-template <> struct std::formatter<Profile> : experimental_json_builder::universal_formatter { };
-template <> struct std::formatter<User> : experimental_json_builder::universal_formatter { };
 
 std::string generate_email(const std::string &name,
                            const std::string &company) {
