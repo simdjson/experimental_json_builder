@@ -50,6 +50,14 @@ void from_json(const JsonValue& j, T& obj) requires(UserDefinedType<T>) {
     if (j.type != JsonValueType::Object) {
         throw std::runtime_error("Expected object type for user-defined type value");
     }
+    /*
+    [:expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
+        constexpr auto name = std::meta::name_of(dm);
+        auto it = j.object_value.find(name.data());
+        if (it != j.object_value.end()) {
+            from_json(it->second, obj.[:dm:]);
+        }
+    };*/
     [:expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
         constexpr auto name = std::meta::name_of(dm);
         auto it = j.object_value.find(name.data());
