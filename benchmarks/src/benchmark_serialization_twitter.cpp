@@ -1,4 +1,4 @@
-#include "../../src/experimental_json_builder.hpp"
+// #include "../../src/experimental_json_builder.hpp"
 #include "../../src/from_json.hpp"
 #include "../../src/json_escaping.hpp"
 #include "event_counter.h"
@@ -153,15 +153,21 @@ std::string fetchTwitterJson(const std::string& url) {
 
 int main()
 {
-    std::string json_str = fetchTwitterJson("https://github.com/miloyip/nativejson-benchmark/blob/master/data/twitter.json");
-    json_parser::JsonParser parser(json_str);
-    auto json_value = parser.parse();
+  
+  std::string json_str = fetchTwitterJson("https://raw.githubusercontent.com/miloyip/nativejson-benchmark/master/data/twitter.json");
+  json_parser::JsonParser parser(json_str);
+  auto json_value = parser.parse();
 
-    TwitterData my_struct;
-    experimental_json_builder::from_json(json_value, my_struct);
+  TwitterData my_struct;
+  experimental_json_builder::from_json(json_value, my_struct);
 
-    bench_fast_simpler(my_struct);
+  experimental_json_builder::StringBuilder b(32*1024*1024); // pre-allocate 32 MB
+  experimental_json_builder::fast_to_json_string(b, my_struct);
+  std::cout << "vamo" << std::endl;
 
+  // bench_fast_simpler(my_struct);
+  
+  return 0;
 }
 
 

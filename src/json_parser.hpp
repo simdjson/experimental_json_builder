@@ -173,6 +173,7 @@ private:
         return JsonValue{JsonValueType::String, result};
     }
 
+
     JsonValue parse_number() {
         size_t start_pos = pos;
         if (input[pos] == '-') {
@@ -189,24 +190,29 @@ private:
         }
         if (pos < input.size() && (input[pos] == 'e' || input[pos] == 'E')) {
             ++pos;
-            if (input[pos] == '+' || input[pos] == '-') {
+            if (pos < input.size() && (input[pos] == '+' || input[pos] == '-')) {
                 ++pos;
             }
             while (pos < input.size() && isdigit(input[pos])) {
                 ++pos;
             }
         }
-        
+
         // Extract the substring representing the number
         std::string number_str = input.substr(start_pos, pos - start_pos);
-        
+
         // Convert the substring to a double using stringstream
         std::stringstream ss(number_str);
         double number_value;
         ss >> number_value;
-        
+
+        if (ss.fail()) {
+            throw std::runtime_error("Failed to parse number: " + number_str);
+        }
+
         return JsonValue{JsonValueType::Number, "", number_value};
     }
+
 };
 
 } // namespace json_parser

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10) # Set the minimum required version of CMake
 
-project(SerializationBenchmark) # Name your project
+project(SerializatonTwitterBenchmark) # Name your project
 if (NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type selected, default to Release")
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -18,9 +18,15 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 # Add executable target
 add_executable(SerializationBenchmark benchmark_serialization.cpp)
+add_executable(SerializationTwitterBenchmark benchmark_serialization_twitter.cpp)
 
 target_compile_options(SerializationBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
+target_compile_options(SerializationTwitterBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
+
+find_package(CURL REQUIRED)
+
 # If you have any libraries to link (e.g., if your project grows and you decide to compile some parts into a library),
 # you would specify them here with target_link_libraries(MyLibraryExample mylib)
+target_link_libraries(SerializationTwitterBenchmark CURL::libcurl)
 
 target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial nlohmann_json::nlohmann_json simdjson::simdjson)

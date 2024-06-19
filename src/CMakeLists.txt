@@ -16,18 +16,12 @@ include_directories(${CMAKE_SOURCE_DIR})
 # Add executable target
 add_executable(ExperimentalJsonBuilder ../examples/example.cpp)
 add_executable(ExperimentalDeserialization ../examples/example2.cpp)
-add_executable(TwitterBenchmark ../benchmarks/src/benchmark_serialization_twitter.cpp)
 
 add_library(simdjson-serial INTERFACE)
 target_include_directories(simdjson-serial INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-find_package(CURL REQUIRED)
-
 target_compile_options(ExperimentalJsonBuilder PRIVATE -freflection -stdlib=libc++ -std=c++26)
 target_compile_options(ExperimentalDeserialization PRIVATE -freflection -stdlib=libc++ -std=c++26)
-target_compile_options(TwitterBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
-
-target_link_libraries(TwitterBenchmark CURL::libcurl)
 
 # If you have any libraries to link (e.g., if your project grows and you decide to compile some parts into a library),
 # you would specify them here with target_link_libraries(MyLibraryExample mylib)
