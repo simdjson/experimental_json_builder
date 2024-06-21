@@ -204,6 +204,26 @@ consteval std::string to_quoted_escaped(std::string_view input) {
   out.push_back('"');
   return out;
 }
+
+consteval std::string to_quoted_escaped(std::u8string_view input) {
+  std::string out = "\"";
+  for (char8_t c : input) {
+    if (json_quotable_character[uint8_t(c)]) {
+      if (c == '"') {
+        out.append("\\\"");
+      } else if (c == '\\') {
+        out.append("\\\\");
+      } else {
+        std::string_view v = control_chars[uint8_t(c)];
+        out.append(v);
+      }
+    } else {
+      out.push_back(char(c));
+    }
+  }
+  out.push_back('"');
+  return out;
+}
 } // namespace json_escaping
 } // namespace experimental
 } // namespace simdjson

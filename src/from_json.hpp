@@ -50,7 +50,7 @@ void from_json(const JsonValue& j, T& obj) requires(UserDefinedType<T> && !Conta
     // Using reflection to iterate over data members
     [:expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
         constexpr auto name = std::meta::name_of(dm);
-        auto it = j.object_value.find(std::string(reinterpret_cast<const char*>(name.data())));
+        auto it = j.object_value.find(std::string(reinterpret_cast<const char*>(name.data()), name.size()));
         if (it != j.object_value.end()) {
             from_json(it->second, obj.[:dm:]);
         }

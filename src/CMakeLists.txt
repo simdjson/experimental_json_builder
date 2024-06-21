@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.10) # Set the minimum required version of CMake
 project(ExperimentalJsonBuilder) # Name your project
 
 # Set C++ standard to C++17 or higher if needed
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_CXX_STANDARD 23)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Optionally, specify the C++ compiler directly (here we use clang++)
 set(CMAKE_C_COMPILER clang)
