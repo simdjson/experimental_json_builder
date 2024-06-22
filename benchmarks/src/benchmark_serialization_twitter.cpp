@@ -4,6 +4,7 @@
 #include "event_counter.h"
 #include <curl/curl.h>
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <ctime>
 #include <iostream>
@@ -163,9 +164,14 @@ int main()
 
   experimental_json_builder::StringBuilder b(32*1024*1024); // pre-allocate 32 MB
   experimental_json_builder::fast_to_json_string(b, my_struct);
-  std::cout << "vamo" << std::endl;
 
-  // bench_fast_simpler(my_struct);
+  bench_fast_simpler(my_struct);
+
+  // Now let's validate the result
+  auto sb = experimental_json_builder::StringBuilder(32*1024*1024);
+  experimental_json_builder::fast_to_json_string(sb, my_struct);
+
+  assert(sb.c_str() == json_str && "The strings are not the same!");
   
   return 0;
 }

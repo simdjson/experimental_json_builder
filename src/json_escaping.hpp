@@ -66,8 +66,33 @@ constexpr inline bool table_needs_escaping(std::string_view view) {
   return needs;
 }
 
+/*
 #if SIMDJSON_EXPERIMENTAL_HAS_NEON
 
+inline bool fast_needs_escaping(std::string_view view) {
+  if (view.size() < 16) {
+    return simple_needs_escaping(view);
+  }
+  size_t i = 0;
+  static uint8_t rnt_array[16] = {1, 0, 34, 0, 0,  0, 0, 0,
+                                  0, 0, 0,  0, 92, 0, 0, 0};
+  const uint8x16_t rnt = vld1q_u8(rnt_array);
+  uint8x16_t running = vdupq_n_u8(0);
+  for (; i + 15 < view.size(); i += 16) {
+    uint8x16_t word = vld1q_u8((const uint8_t *)view.data() + i);
+    running = vorrq_u8(running, vceqq_u8(rnt, vandq_u8(word, vdupq_n_u8(15))));
+    running = vorrq_u8(running, vcltq_u8(word, vdupq_n_u8(32)));
+  }
+  if (i < view.size()) {
+    uint8x16_t word =
+        vld1q_u8((const uint8_t *)view.data() + view.length() - 16);
+    running = vorrq_u8(running, vceqq_u8(rnt, vandq_u8(word, vdupq_n_u8(15))));
+    running = vorrq_u8(running, vcltq_u8(word, vdupq_n_u8(32)));
+  }
+  return vmaxvq_u32(vreinterpretq_u32_u8(running)) != 0;
+}*/
+
+/*
 inline bool fast_needs_escaping(std::string_view view) {
   if (view.size() < 16) {
     return simple_needs_escaping(view);
@@ -91,8 +116,9 @@ inline bool fast_needs_escaping(std::string_view view) {
     running = vorrq_u8(running, vcltq_u8(word, vdupq_n_u8(32)));
   }
   return vmaxvq_u32(vreinterpretq_u32_u8(running)) != 0;
-}
+}*/
 
+/*
 #elif SIMDJSON_EXPERIMENTAL_HAS_SSE2
 
 inline bool fast_needs_escaping(std::string_view view) {
@@ -122,11 +148,11 @@ inline bool fast_needs_escaping(std::string_view view) {
 }
 
 #else
-
+*/
 inline bool fast_needs_escaping(std::string_view view) {
   return branchless_needs_escaping(view);
 }
-#endif
+// #endif
 
 constexpr inline size_t
 find_next_json_quotable_character(const std::string_view view,
