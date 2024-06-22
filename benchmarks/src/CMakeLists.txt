@@ -1,15 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(SerializationTwitterBenchmark)
-
-# Set C++ standard to C++23
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+project(SerializatonTwitterBenchmark) # Name your project
 if (NOT CMAKE_BUILD_TYPE)
-  message(STATUS "No build type selected, default to Debug")
-  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+  message(STATUS "No build type selected, default to Release")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
 endif()
+# Set C++ standard to C++17 or higher if needed
+#set(CMAKE_CXX_STANDARD 23)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Optionally, specify the C++ compiler directly (here we use clang++)
 set(CMAKE_C_COMPILER clang)
