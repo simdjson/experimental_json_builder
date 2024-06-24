@@ -122,7 +122,7 @@ brew install cmake ninja git python3
 Clone the Clang source code from the experimental branch:
 
 ```
-git clone --depth=1 --branch p2996 <https://github.com/bloomberg/clang-p2996.git> ~/clang-source
+git clone --depth=1 --branch p2996 https://github.com/bloomberg/clang-p2996.git ~/clang-source
 
 ```
 
