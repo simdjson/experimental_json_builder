@@ -8,7 +8,10 @@ project(experimental_json_builder
     HOMEPAGE_URL "https://simdjson.org/"
     LANGUAGES CXX
 )
-
+if (NOT CMAKE_BUILD_TYPE)
+  message(STATUS "No build type selected, default to Release")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+endif()
 #set(CMAKE_CXX_STANDARD 23)
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

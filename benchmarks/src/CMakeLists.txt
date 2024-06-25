@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(SerializatonTwitterBenchmark) # Name your project
-# if (NOT CMAKE_BUILD_TYPE)
-#  message(STATUS "No build type selected, default to Release")
-#  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-#endif()
+if (NOT CMAKE_BUILD_TYPE)
+  message(STATUS "No build type selected, default to Release")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+endif()
 
 # Set C++ standard to C++17 or higher if needed
 #set(CMAKE_CXX_STANDARD 23)
@@ -14,7 +14,7 @@ project(SerializatonTwitterBenchmark) # Name your project
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 
-set(CMAKE_OSX_ARCHITECTURES "arm64")
+# set(CMAKE_OSX_ARCHITECTURES "arm64")
 
 # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 #   set(CMAKE_C_FLAGS_DEBUG "-g -fsanitize=address,undefined -fno-omit-frame-pointer")
@@ -36,9 +36,10 @@ add_executable(SerializationTwitterBenchmark benchmark_serialization_twitter.cpp
 target_compile_options(SerializationBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
 target_compile_options(SerializationTwitterBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
 
-find_package(CURL REQUIRED)
+#find_package(CURL REQUIRED)
 
 # Link sanitizers and libraries
-target_link_libraries(SerializationTwitterBenchmark PRIVATE CURL::libcurl)
+target_link_libraries(SerializationTwitterBenchmark PRIVATE simdjson::simdjson) #CURL::libcurl 
 target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial nlohmann_json::nlohmann_json simdjson::simdjson)
 
+target_compile_definitions(SerializationTwitterBenchmark PRIVATE JSON_FILE="${PROJECT_SOURCE_DIR}/data/twitter.json")
