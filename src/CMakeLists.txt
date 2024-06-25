@@ -15,7 +15,7 @@ project(ExperimentalJsonBuilder) # Name your project
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 
-set(CMAKE_OSX_ARCHITECTURES "arm64")
+#set(CMAKE_OSX_ARCHITECTURES "arm64")
 
 # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 #   set(CMAKE_C_FLAGS_DEBUG "-g -fsanitize=address,undefined -fno-omit-frame-pointer")

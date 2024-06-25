@@ -51,20 +51,20 @@ private:
             return parse_number();
         } else if (input.compare(pos, 4, "true") == 0) {
             pos += 4;
-            return JsonValue{JsonValueType::Boolean, "", 0.0, true};
+            return JsonValue{JsonValueType::Boolean, "", 0.0, true, {}, {}};
         } else if (input.compare(pos, 5, "false") == 0) {
             pos += 5;
-            return JsonValue{JsonValueType::Boolean, "", 0.0, false};
+            return JsonValue{JsonValueType::Boolean, "", 0.0, false, {}, {}};
         } else if (input.compare(pos, 4, "null") == 0) {
             pos += 4;
-            return JsonValue{JsonValueType::Null};
+            return JsonValue{JsonValueType::Null, "", 0.0, false, {}, {}};
         } else {
             throw std::runtime_error("Invalid JSON value");
         }
     }
 
     JsonValue parse_object() {
-        JsonValue result{JsonValueType::Object};
+        JsonValue result{JsonValueType::Object, "", 0.0, false, {}, {}};
         ++pos; // Skip '{'
         skip_whitespace();
         if (input[pos] == '}') {
@@ -98,7 +98,7 @@ private:
     }
 
     JsonValue parse_array() {
-        JsonValue result{JsonValueType::Array};
+        JsonValue result{JsonValueType::Array, "", 0.0, false, {}, {}};
         ++pos; // Skip '['
         skip_whitespace();
         if (input[pos] == ']') {
@@ -170,7 +170,7 @@ private:
             throw std::runtime_error("Unexpected end of input in string");
         }
         ++pos; // Skip closing '"'
-        return JsonValue{JsonValueType::String, result};
+        return JsonValue{JsonValueType::String, result, 0.0, false, {}, {}};
     }
 
 
@@ -210,7 +210,7 @@ private:
             throw std::runtime_error("Failed to parse number: " + number_str);
         }
 
-        return JsonValue{JsonValueType::Number, "", number_value};
+        return JsonValue{JsonValueType::Number, "", number_value, false, {}, {}};
     }
 
 };

@@ -356,17 +356,17 @@ static u64 (*kperf_ticks_to_ns)(u64 ticks);
 static u64 (*kperf_tick_frequency)(void);
 
 /// Get lightweight PET mode (not in kperf.framework).
-static int kperf_lightweight_pet_get(u32 *enabled) {
+/*static int kperf_lightweight_pet_get(u32 *enabled) {
   if (!enabled)
     return -1;
   usize size = 4;
   return sysctlbyname("kperf.lightweight_pet", enabled, &size, NULL, 0);
-}
+}*/
 
 /// Set lightweight PET mode (not in kperf.framework).
-static int kperf_lightweight_pet_set(u32 enabled) {
+/*static int kperf_lightweight_pet_set(u32 enabled) {
   return sysctlbyname("kperf.lightweight_pet", NULL, NULL, &enabled, 4);
-}
+}*/
 
 // -----------------------------------------------------------------------------
 // <kperfdata.framework> header (reverse engineered)
@@ -834,57 +834,57 @@ typedef struct {
 
 /// Clean up trace buffers and reset ktrace/kdebug/kperf.
 /// @return 0 on success.
-static int kdebug_reset(void) {
+/*static int kdebug_reset(void) {
   int mib[3] = {CTL_KERN, KERN_KDEBUG, KERN_KDREMOVE};
   return sysctl(mib, 3, NULL, NULL, NULL, 0);
-}
+}*/
 
 /// Disable and reinitialize the trace buffers.
 /// @return 0 on success.
-static int kdebug_reinit(void) {
+/*static int kdebug_reinit(void) {
   int mib[3] = {CTL_KERN, KERN_KDEBUG, KERN_KDSETUP};
   return sysctl(mib, 3, NULL, NULL, NULL, 0);
-}
+}*/
 
 /// Set debug filter.
-static int kdebug_setreg(kd_regtype *kdr) {
+/*static int kdebug_setreg(kd_regtype *kdr) {
   int mib[3] = {CTL_KERN, KERN_KDEBUG, KERN_KDSETREG};
   usize size = sizeof(kd_regtype);
   return sysctl(mib, 3, kdr, &size, NULL, 0);
-}
+}*/
 
 /// Set maximum number of trace entries (kd_buf).
 /// Only allow allocation up to half the available memory (sane_size).
 /// @return 0 on success.
-static int kdebug_trace_setbuf(int nbufs) {
+/*static int kdebug_trace_setbuf(int nbufs) {
   int mib[4] = {CTL_KERN, KERN_KDEBUG, KERN_KDSETBUF, nbufs};
   return sysctl(mib, 4, NULL, NULL, NULL, 0);
-}
+}*/
 
 /// Enable or disable kdebug trace.
 /// Trace buffer must already be initialized.
 /// @return 0 on success.
-static int kdebug_trace_enable(bool enable) {
+/*static int kdebug_trace_enable(bool enable) {
   int mib[4] = {CTL_KERN, KERN_KDEBUG, KERN_KDENABLE, enable};
   return sysctl(mib, 4, NULL, 0, NULL, 0);
-}
+}*/
 
 /// Retrieve trace buffer information from kernel.
 /// @return 0 on success.
-static int kdebug_get_bufinfo(kbufinfo_t *info) {
+/*static int kdebug_get_bufinfo(kbufinfo_t *info) {
   if (!info)
     return -1;
   int mib[3] = {CTL_KERN, KERN_KDEBUG, KERN_KDGETBUF};
   size_t needed = sizeof(kbufinfo_t);
   return sysctl(mib, 3, info, &needed, NULL, 0);
-}
+}*/
 
 /// Retrieve trace buffers from kernel.
 /// @param buf Memory to receive buffer data, array of `kd_buf`.
 /// @param len Length of `buf` in bytes.
 /// @param count Number of trace entries (kd_buf) obtained.
 /// @return 0 on success.
-static int kdebug_trace_read(void *buf, usize len, usize *count) {
+/*static int kdebug_trace_read(void *buf, usize len, usize *count) {
   if (count)
     *count = 0;
   if (!buf || !len)
@@ -899,13 +899,13 @@ static int kdebug_trace_read(void *buf, usize len, usize *count) {
     return ret;
   *count = len;
   return 0;
-}
+}*/
 
 /// Block until there are new buffers filled or `timeout_ms` have passed.
 /// @param timeout_ms timeout milliseconds, 0 means wait forever.
 /// @param suc set true if new buffers filled.
 /// @return 0 on success.
-static int kdebug_wait(usize timeout_ms, bool *suc) {
+/*static int kdebug_wait(usize timeout_ms, bool *suc) {
   if (timeout_ms == 0)
     return -1;
   int mib[3] = {CTL_KERN, KERN_KDEBUG, KERN_KDBUFWAIT};
@@ -914,7 +914,7 @@ static int kdebug_wait(usize timeout_ms, bool *suc) {
   if (suc)
     *suc = !!val;
   return ret;
-}
+}*/
 
 // -----------------------------------------------------------------------------
 // Demo
