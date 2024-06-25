@@ -122,7 +122,7 @@ brew install cmake ninja git python3
 Clone the Clang source code from the experimental branch:
 
 ```
-git clone --depth=1 --branch p2996 <https://github.com/bloomberg/clang-p2996.git> ~/clang-source
+git clone --depth=1 --branch p2996 https://github.com/bloomberg/clang-p2996.git ~/clang-source
 
 ```
 
@@ -141,11 +141,11 @@ cd ~/clang-source/build-llvm
 Configure the LLVM/Clang build with CMake:
 
 ```
-cmake -S ~/clang-source/llvm -B ~/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release \\
-    -DLLVM_ENABLE_ASSERTIONS=ON \\
+cmake -S ~/clang-source/llvm -B ~/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release \
+    -DLLVM_ENABLE_ASSERTIONS=ON \
     -DLLVM_UNREACHABLE_OPTIMIZE=ON \\
-    -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \\
-    -DCLANG_DEFAULT_CXX_STDLIB=libc++ \\
+    -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+    -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
     -DLLVM_ENABLE_PROJECTS=clang -G Ninja
 
 ```
