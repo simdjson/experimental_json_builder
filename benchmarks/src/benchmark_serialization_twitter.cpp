@@ -2,7 +2,7 @@
 #include "../../src/from_json.hpp"
 #include "../../src/json_escaping.hpp"
 #include "event_counter.h"
-#include <curl/curl.h>
+//#include <curl/curl.h>
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -13,6 +13,9 @@
 #include <vector>
 #include <format>
 #include <atomic>
+#include <simdjson.h>
+#include <fstream>
+#include <filesystem>
 
 struct User {
     int64_t id;
@@ -75,7 +78,7 @@ event_collector collector;
 template <class function_type>
 event_aggregate bench(const function_type &function, size_t min_repeat = 10,
                       size_t min_time_ns = 1000000000,
-                      size_t max_repeat = 100) {
+                      size_t max_repeat = 100000) {
   event_aggregate aggregate{};
   size_t N = min_repeat;
   if (N == 0) {
@@ -136,6 +139,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     return size * nmemb;
 }
 
+/*
 std::string fetchTwitterJson(const std::string& url) {
   CURL* curl;
   CURLcode res; // TODO: check return value
@@ -150,12 +154,25 @@ std::string fetchTwitterJson(const std::string& url) {
     curl_easy_cleanup(curl);
   }
   return readBuffer;
+}*/
+
+std::string read_file(std::string filename) {
+  printf("Reading file %s\n", filename.c_str());
+  constexpr size_t read_size = 4096;
+  auto stream = std::ifstream(filename.c_str());
+  stream.exceptions(std::ios_base::badbit);
+  std::string out;
+  std::string buf(read_size, '\0');
+  while (stream.read(&buf[0], read_size)) {
+    out.append(buf, 0, size_t(stream.gcount()));
+  }
+  out.append(buf, 0, size_t(stream.gcount()));
+  return out;
 }
 
 int main()
 {
-  
-  std::string json_str = fetchTwitterJson("https://raw.githubusercontent.com/miloyip/nativejson-benchmark/master/data/twitter.json");
+  std::string json_str = read_file(JSON_FILE);
   json_parser::JsonParser parser(json_str);
   auto json_value = parser.parse();
 
@@ -171,8 +188,20 @@ int main()
   auto sb = experimental_json_builder::StringBuilder(32*1024*1024);
   experimental_json_builder::fast_to_json_string(sb, my_struct);
 
-  assert(sb.c_str() == json_str && "The strings are not the same!");
-  
+  std::unique_ptr<char[]> buffer{new char[json_str.size()]};
+  size_t new_length{};
+  printf("json_str.size(): %zu\n", json_str.size());
+  auto error = simdjson::minify(json_str.data(), json_str.size(), buffer.get(), new_length);
+  if(error) {
+    printf("Error: %d\n", error);
+  }
+  printf("minimized length: %zu\n", new_length);
+  std::string_view json_str_view{buffer.get(), new_length};
+  std::string_view answer = sb.view();
+  if(answer != json_str_view) {
+    printf("The strings are not the same!\n");
+    printf("length of the output is %zu and I expected %zu\n", answer.size(), json_str_view.size());
+  }
   return 0;
 }
 
