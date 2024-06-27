@@ -97,6 +97,10 @@ You can modify the source code with your favorite editor and run again steps 2 (
 
 ## Instructions for running it natively on macOS
 
+Warning: Installing an experimental compiler as your main compiler on macOS may cause problems.
+We recommend using a docker container. If you choose to install an experimental compiler system-wide
+under macOS, you are doing so at your own risks.
+
 Here are the step-by-step instructions:
 
 ### 1. Install Homebrew
@@ -104,8 +108,7 @@ Here are the step-by-step instructions:
 If you don't already have Homebrew installed, install it by running:
 
 ```
-/bin/bash -c "$(curl -fsSL <https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh>)"
-
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 ### 2. Install Necessary Packages
