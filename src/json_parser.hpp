@@ -13,7 +13,7 @@ enum class JsonValueType { Null, Boolean, Number, String, Array, Object };
 struct JsonValue {
     JsonValueType type;
     std::string string_value;
-    double number_value;
+    long double number_value;
     bool bool_value;
     std::vector<JsonValue> array_value;
     std::unordered_map<std::string, JsonValue> object_value;
@@ -203,7 +203,7 @@ private:
 
         // Convert the substring to a double using stringstream
         std::stringstream ss(number_str);
-        double number_value;
+        long double number_value;
         ss >> number_value;
 
         if (ss.fail()) {
