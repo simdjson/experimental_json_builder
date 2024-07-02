@@ -293,6 +293,17 @@ void test_correctness()
   // Now let's validate the result
   if (my_struct != simd_struct) {
     std::cout << "the structs do not match" << std::endl;
+    experimental_json_builder::StringBuilder b1(32*1024*1024); // pre-allocate 32 MB
+    experimental_json_builder::fast_to_json_string(b1, my_struct);
+    experimental_json_builder::StringBuilder b2(32*1024*1024); // pre-allocate 32 MB
+    experimental_json_builder::fast_to_json_string(b2, simd_struct);
+
+    auto A = b1.view();
+    auto B = b2.view();
+
+    std::cout << A.size() << " " << B.size() << std::endl;
+    if(A == B) std::cout << "equal " << std::endl;
+    else std::cout << "different" << std::endl;
     return;
   }
   std::cout << "The structs match" << std::endl;
