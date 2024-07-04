@@ -39,7 +39,7 @@ target_compile_options(SerializationTwitterBenchmark PRIVATE -freflection -stdli
 #find_package(CURL REQUIRED)
 
 # Link sanitizers and libraries
-target_link_libraries(SerializationTwitterBenchmark PRIVATE simdjson::simdjson) #CURL::libcurl 
+target_link_libraries(SerializationTwitterBenchmark PRIVATE nlohmann_json::nlohmann_json simdjson::simdjson)
 target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial nlohmann_json::nlohmann_json simdjson::simdjson)
 
 target_compile_definitions(SerializationTwitterBenchmark PRIVATE JSON_FILE="${PROJECT_SOURCE_DIR}/data/twitter.json")
