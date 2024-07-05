@@ -1,21 +1,16 @@
 #include "../../src/from_json.hpp"
-#include "../../src/json_escaping.hpp"
 #include "twitter_data.hpp"
 #include "nlohmann_twitter_data.hpp"
 #include "event_counter.h"
-#include <algorithm>
 #include <cassert>
-#include <chrono>
+#include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <random>
 #include <string>
-#include <vector>
 #include <format>
 #include <atomic>
 #include <simdjson.h>
 #include <fstream>
-#include <filesystem>
 #include <nlohmann/json.hpp>
 
 
@@ -103,7 +98,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 }
 
 std::string read_file(std::string filename) {
-  printf("Reading file %s\n", filename.c_str());
+  printf("# Reading file %s\n", filename.c_str());
   constexpr size_t read_size = 4096;
   auto stream = std::ifstream(filename.c_str());
   stream.exceptions(std::ios_base::badbit);
@@ -116,9 +111,8 @@ std::string read_file(std::string filename) {
   return out;
 }
 
-void test_correctness()
+void test_correctness(std::string_view json_str)
 {
-  std::string json_str = read_file(JSON_FILE);
   simdjson::dom::parser simd_parser;
   simdjson::dom::element simd_doc;
   auto error = simd_parser.parse(json_str).get(simd_doc);
@@ -201,21 +195,22 @@ void test_correctness()
   // Now let's validate the result to see if the round-trip struct is the same as the original
   if (my_struct != simd_struct) 
   {
-    std::cout << "the structs do not match" << std::endl;
+    std::cout << "WARNING: the structs do not match !!!" << std::endl;
   }
   else
   {
-    std::cout << "The structs match" << std::endl;
+    std::cout << "# Verification succesful, the structs match." << std::endl;
   }
 }
 
 int main()
 {
   // Testing correctness of round-trip (serialization + deserialization)
-  test_correctness();
+  const std::string json_str = read_file(JSON_FILE);
+
+  test_correctness(json_str);
 
   // Benchmarking the serialization
-  std::string json_str = read_file(JSON_FILE);
   json_parser::JsonParser parser(json_str);
   auto json_value = parser.parse();
   TwitterData my_struct;
@@ -223,5 +218,5 @@ int main()
   bench_fast_simpler(my_struct);
   bench_nlohmann(my_struct);
 
-  return 0;
+  return EXIT_SUCCESS;
 }
