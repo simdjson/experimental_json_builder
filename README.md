@@ -36,7 +36,7 @@ namespace ns {
 Or use one of the Macros described
 [here](https://github.com/nlohmann/json?tab=readme-ov-file#simplify-your-life-with-macros) in your class/struct.
 
-By leveraging reflection, we can support for something as simple as:
+By leveraging compile-time reflection, we can support for something as simple as:
 
 ```c++
 int main() {
@@ -48,6 +48,7 @@ int main() {
 ```
 
 With ~200 lines of code (as you can see in the [toy_builder.cpp](prototype_playground/toy_builder.cpp)).
+
 
 ## Current status
 There are 2 versions of compiler that aim to support the C++ 26 reflection paper.
@@ -209,6 +210,11 @@ cmake --build build
 3. Run the benchmark.
 ```bash
 ./build/benchmarks/src/SerializationBenchmark
+```
+
+4. Run the (twitter) benchmark.
+```bash
+./build/benchmarks/src/SerializationTwitterBenchmark
 ```
 
 ### Running tests
