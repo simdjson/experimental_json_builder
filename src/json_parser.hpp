@@ -13,7 +13,7 @@ enum class JsonValueType { Null, Boolean, Number, String, Array, Object };
 struct JsonValue {
     JsonValueType type;
     std::string string_value;
-    long double number_value;
+    long double number_value; // This is not guaranteed to be able to represent any uint64_t value with full precision, this is an experimental parser.
     bool bool_value;
     std::vector<JsonValue> array_value;
     std::unordered_map<std::string, JsonValue> object_value;
