@@ -57,7 +57,6 @@ add_executable(SerializationTwitterBenchmark benchmark_serialization_twitter.cpp
 target_compile_options(SerializationBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
 target_compile_options(SerializationTwitterBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
 
-#find_package(CURL REQUIRED)
 
 # Link sanitizers and libraries
 target_link_libraries(SerializationTwitterBenchmark PRIVATE nlohmann_json::nlohmann_json simdjson::simdjson)
