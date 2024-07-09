@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(SerializatonTwitterBenchmark) # Name your project
-
 # Set C++ standard to C++17 or higher if needed
 #set(CMAKE_CXX_STANDARD 23)
 #set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,6 +34,7 @@ default to Debug. Consider setting CMAKE_BUILD_TYPE.")
   endif()
 endif()
 
+# set(CMAKE_OSX_ARCHITECTURES "arm64")
 
 # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 #   set(CMAKE_C_FLAGS_DEBUG "-g -fsanitize=address,undefined -fno-omit-frame-pointer")
@@ -57,6 +56,7 @@ add_executable(SerializationTwitterBenchmark benchmark_serialization_twitter.cpp
 target_compile_options(SerializationBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
 target_compile_options(SerializationTwitterBenchmark PRIVATE -freflection -stdlib=libc++ -std=c++26)
 
+#find_package(CURL REQUIRED)
 
 # Link sanitizers and libraries
 target_link_libraries(SerializationTwitterBenchmark PRIVATE nlohmann_json::nlohmann_json simdjson::simdjson)
