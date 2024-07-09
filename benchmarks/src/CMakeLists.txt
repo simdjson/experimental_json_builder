@@ -36,7 +36,6 @@ default to Debug. Consider setting CMAKE_BUILD_TYPE.")
   endif()
 endif()
 
-# set(CMAKE_OSX_ARCHITECTURES "arm64")
 
 # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 #   set(CMAKE_C_FLAGS_DEBUG "-g -fsanitize=address,undefined -fno-omit-frame-pointer")
