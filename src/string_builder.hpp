@@ -17,15 +17,33 @@ public:
 
   template <arithmetic number_type>
   inline void append(number_type v) {
-    auto result =
-        std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
-    if(result.ec != std::errc()) {
-      constexpr size_t max_number_size = 20;
-      capacity_check(max_number_size);
-      result =
-        std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
+    if constexpr (std::is_same_v<number_type, bool>) {
+      if (v) {
+        constexpr char true_literal[] = "true";
+        constexpr size_t true_len = sizeof(true_literal) - 1;
+        capacity_check(true_len);
+        std::memcpy(buffer.get() + position, true_literal, true_len);
+        position += true_len;
+      } else {
+        constexpr char false_literal[] = "false";
+        constexpr size_t false_len = sizeof(false_literal) - 1;
+        capacity_check(false_len);
+        std::memcpy(buffer.get() + position, false_literal, false_len);
+        position += false_len;
+      }
     }
-    position = result.ptr - buffer.get();
+    else
+    {
+      auto result =
+          std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
+      if(result.ec != std::errc()) {
+        constexpr size_t max_number_size = 20;
+        capacity_check(max_number_size);
+        result =
+          std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
+      }
+      position = result.ptr - buffer.get();
+    }
   }
 
   inline void append(char c) { capacity_check(1); buffer[position++] = c; }

@@ -1,16 +1,20 @@
 #include "../src/experimental_json_builder.hpp"
 #include "../src/string_builder.hpp"
-#include "../src/universal_formatter_misc.hpp"
 #include <string>
 #include <vector>
 #include <format>
 #include <print>
 #include <iostream>
 
+struct Z {
+  int x;
+};
+
 struct Y {
   int g;
   std::string h;
   std::vector<int> i; 
+  Z z;
 };
 
 struct X {
@@ -25,7 +29,7 @@ struct X {
 
 // template <> struct std::formatter<Y> : universal_formatter { }; -> not needed when dealing with structs
 // todo -> test the limitations of both methods with private/protected members, as well as with inheritance
-template <> struct std::formatter<X> : experimental_json_builder::universal_formatter { };
+// template <> struct std::formatter<X> : experimental_json_builder::universal_formatter { };
 
 int main() {
   X s1 = {.a = '1',
@@ -34,7 +38,7 @@ int main() {
           .d = "test string\n\r\"",
           .e = {1, 2, 3},
           .f = {"ab", "cd", "fg"},
-          .y = {.g = 100, .h = "test string\n\r\"", .i = {1, 2, 3}}};
+          .y = {.g = 100, .h = "test string\n\r\"", .i = {1, 2, 3}, .z = {.x = 1000}}};
 
   experimental_json_builder::StringBuilder sb;
   experimental_json_builder::fast_to_json_string(sb, s1);

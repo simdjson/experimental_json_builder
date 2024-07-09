@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 #include <cstdint>
-#include <string_view>
 #include <string>
+#include <string_view>
 
 #if defined(__SSE2__) || defined(__x86_64__) || defined(__x86_64) ||           \
     (defined(_M_AMD64) || defined(_M_X64) ||                                   \
@@ -66,6 +66,7 @@ constexpr inline bool table_needs_escaping(std::string_view view) {
   return needs;
 }
 
+
 #if SIMDJSON_EXPERIMENTAL_HAS_NEON
 
 inline bool fast_needs_escaping(std::string_view view) {
@@ -73,19 +74,21 @@ inline bool fast_needs_escaping(std::string_view view) {
     return simple_needs_escaping(view);
   }
   size_t i = 0;
-  static uint8_t rnt_array[16] = {1, 0, 34, 0, 0,  0, 0, 0,
-                                  0, 0, 0,  0, 92, 0, 0, 0};
-  const uint8x16_t rnt = vld1q_u8(rnt_array);
-  uint8x16_t running{0};
+  uint8x16_t running = vdupq_n_u8(0);
+  uint8x16_t v34 = vdupq_n_u8(34);
+  uint8x16_t v92 = vdupq_n_u8(92);
+
   for (; i + 15 < view.size(); i += 16) {
     uint8x16_t word = vld1q_u8((const uint8_t *)view.data() + i);
-    running = vorrq_u8(running, vceqq_u8(rnt, vandq_u8(word, vdupq_n_u8(15)), word));
+    running = vorrq_u8(running, vceqq_u8(word, v34));
+    running = vorrq_u8(running, vceqq_u8(word, v92));
     running = vorrq_u8(running, vcltq_u8(word, vdupq_n_u8(32)));
-  }
+  }  
   if (i < view.size()) {
     uint8x16_t word =
         vld1q_u8((const uint8_t *)view.data() + view.length() - 16);
-    running = vorrq_u8(running, vceqq_u8(rnt, vandq_u8(word, vdupq_n_u8(15)), word));
+    running = vorrq_u8(running, vceqq_u8(word, v34));
+    running = vorrq_u8(running, vceqq_u8(word, v92));
     running = vorrq_u8(running, vcltq_u8(word, vdupq_n_u8(32)));
   }
   return vmaxvq_u32(vreinterpretq_u32_u8(running)) != 0;
@@ -127,12 +130,11 @@ inline bool fast_needs_escaping(std::string_view view) {
 #endif
 
 constexpr inline size_t
-find_next_json_quotable_character(std::string_view view,
+find_next_json_quotable_character(const std::string_view view,
                                   size_t location) noexcept {
-  auto const str = view.substr(location);
-  for (auto pos = str.begin(); pos != str.end(); ++pos) {
+  for (auto pos = view.begin() + location; pos != view.end(); ++pos) {
     if (json_quotable_character[(uint8_t)*pos]) {
-      return pos - str.begin() + location;
+      return pos - view.begin();
     }
   }
   return size_t(view.size());
@@ -159,8 +161,9 @@ constexpr void escape_json_char(char c, char *&out) {
   }
 }
 
-constexpr inline size_t write_string_escaped(std::string_view input,
+constexpr inline size_t write_string_escaped(const std::string_view input,
                                              char *out) {
+  size_t mysize = input.size();
   if (!fast_needs_escaping(input)) { // fast path!
     memcpy(out, input.data(), input.size());
     return input.size();
@@ -169,17 +172,18 @@ constexpr inline size_t write_string_escaped(std::string_view input,
   size_t location = find_next_json_quotable_character(input, 0);
   memcpy(out, input.data(), location);
   out += location;
-  input.remove_prefix(location);
-  escape_json_char(input[0], out);
-  input.remove_prefix(1);
-  // could be optimized in various ways
-  while (!input.empty()) {
-    location = find_next_json_quotable_character(input, 0);
-    memcpy(out, input.data(), location);
-    out += location;
-    input.remove_prefix(location);
-    escape_json_char(input[0], out);
-    input.remove_prefix(1);
+  escape_json_char(input[location], out);
+  location += 1;
+  while (location < mysize) {
+    size_t newlocation = find_next_json_quotable_character(input, location);
+    memcpy(out, input.data() + location, newlocation - location);
+    out += newlocation - location;
+    location = newlocation;
+    if (location == mysize) {
+      break;
+    }
+    escape_json_char(input[location], out);
+    location += 1;
   }
   return out - initout;
 }
@@ -199,6 +203,26 @@ consteval std::string to_quoted_escaped(std::string_view input) {
       }
     } else {
       out.push_back(c);
+    }
+  }
+  out.push_back('"');
+  return out;
+}
+
+consteval std::string to_quoted_escaped(std::u8string_view input) {
+  std::string out = "\"";
+  for (char8_t c : input) {
+    if (json_quotable_character[uint8_t(c)]) {
+      if (c == '"') {
+        out.append("\\\"");
+      } else if (c == '\\') {
+        out.append("\\\\");
+      } else {
+        std::string_view v = control_chars[uint8_t(c)];
+        out.append(v);
+      }
+    } else {
+      out.push_back(char(c));
     }
   }
   out.push_back('"');

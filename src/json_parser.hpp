@@ -13,7 +13,7 @@ enum class JsonValueType { Null, Boolean, Number, String, Array, Object };
 struct JsonValue {
     JsonValueType type;
     std::string string_value;
-    double number_value;
+    long double number_value; // This is not guaranteed to be able to represent any uint64_t value with full precision, this is an experimental parser.
     bool bool_value;
     std::vector<JsonValue> array_value;
     std::unordered_map<std::string, JsonValue> object_value;
@@ -51,20 +51,20 @@ private:
             return parse_number();
         } else if (input.compare(pos, 4, "true") == 0) {
             pos += 4;
-            return JsonValue{JsonValueType::Boolean, "", 0.0, true};
+            return JsonValue{JsonValueType::Boolean, "", 0.0, true, {}, {}};
         } else if (input.compare(pos, 5, "false") == 0) {
             pos += 5;
-            return JsonValue{JsonValueType::Boolean, "", 0.0, false};
+            return JsonValue{JsonValueType::Boolean, "", 0.0, false, {}, {}};
         } else if (input.compare(pos, 4, "null") == 0) {
             pos += 4;
-            return JsonValue{JsonValueType::Null};
+            return JsonValue{JsonValueType::Null, "", 0.0, false, {}, {}};
         } else {
             throw std::runtime_error("Invalid JSON value");
         }
     }
 
     JsonValue parse_object() {
-        JsonValue result{JsonValueType::Object};
+        JsonValue result{JsonValueType::Object, "", 0.0, false, {}, {}};
         ++pos; // Skip '{'
         skip_whitespace();
         if (input[pos] == '}') {
@@ -98,7 +98,7 @@ private:
     }
 
     JsonValue parse_array() {
-        JsonValue result{JsonValueType::Array};
+        JsonValue result{JsonValueType::Array, "", 0.0, false, {}, {}};
         ++pos; // Skip '['
         skip_whitespace();
         if (input[pos] == ']') {
@@ -170,8 +170,9 @@ private:
             throw std::runtime_error("Unexpected end of input in string");
         }
         ++pos; // Skip closing '"'
-        return JsonValue{JsonValueType::String, result};
+        return JsonValue{JsonValueType::String, result, 0.0, false, {}, {}};
     }
+
 
     JsonValue parse_number() {
         size_t start_pos = pos;
@@ -189,24 +190,29 @@ private:
         }
         if (pos < input.size() && (input[pos] == 'e' || input[pos] == 'E')) {
             ++pos;
-            if (input[pos] == '+' || input[pos] == '-') {
+            if (pos < input.size() && (input[pos] == '+' || input[pos] == '-')) {
                 ++pos;
             }
             while (pos < input.size() && isdigit(input[pos])) {
                 ++pos;
             }
         }
-        
+
         // Extract the substring representing the number
         std::string number_str = input.substr(start_pos, pos - start_pos);
-        
+
         // Convert the substring to a double using stringstream
         std::stringstream ss(number_str);
-        double number_value;
+        long double number_value;
         ss >> number_value;
-        
-        return JsonValue{JsonValueType::Number, "", number_value};
+
+        if (ss.fail()) {
+            throw std::runtime_error("Failed to parse number: " + number_str);
+        }
+
+        return JsonValue{JsonValueType::Number, "", number_value, false, {}, {}};
     }
+
 };
 
 } // namespace json_parser
