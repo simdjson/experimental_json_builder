@@ -47,8 +47,6 @@ int main() {
 }
 ```
 
-With ~200 lines of code (as you can see in the [toy_builder.cpp](prototype_playground/toy_builder.cpp)).
-
 As of now, we were able to implement this with ~1k lines of code (and that is including Neon + SSE2 optimizations in [json_escaping.hpp](src/json_escaping.hpp)).
 
 The benchmark results show that our serialization speed can be 20/30x faster than [nlohmann](https://github.com/nlohmann/json).
