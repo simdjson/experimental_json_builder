@@ -62,4 +62,4 @@ target_compile_options(SerializationTwitterBenchmark PRIVATE -freflection -stdli
 target_link_libraries(SerializationTwitterBenchmark PRIVATE nlohmann_json::nlohmann_json simdjson::simdjson)
 target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial nlohmann_json::nlohmann_json simdjson::simdjson)
 
-target_compile_definitions(SerializationTwitterBenchmark PRIVATE JSON_FILE="${PROJECT_SOURCE_DIR}/data/twitter.json")
+target_compile_definitions(SerializationTwitterBenchmark PRIVATE JSON_FILE="${CMAKE_CURRENT_SOURCE_DIR}/data/twitter.json")

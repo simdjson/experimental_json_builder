@@ -13,8 +13,6 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-
-
 event_collector collector;
 
 template <class function_type>
