@@ -12,6 +12,8 @@
 #include <simdjson.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <rfl.hpp>
+#include <rfl/json.hpp>
 
 event_collector collector;
 
@@ -84,6 +86,22 @@ void bench_nlohmann(TwitterData &data) {
     1, output_volume, "bench_nlohmann",
     bench([&data, &measured_volume, &output_volume] () {
       std::string output = nlohmann_serialize(data);
+      measured_volume = output.size();
+      if(measured_volume != output_volume) { printf("mismatch\n"); }
+    })
+  );
+}
+
+void bench_reflect_cpp(TwitterData& data) {
+  std::string output = rfl::json::write(data);
+  size_t output_volume = output.size();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(
+    1, output_volume, "bench_reflect_cpp",
+    bench([&data, &measured_volume, &output_volume] () {
+      std::string output = rfl::json::write(data);
       measured_volume = output.size();
       if(measured_volume != output_volume) { printf("mismatch\n"); }
     })
@@ -215,6 +233,7 @@ int main()
   experimental_json_builder::from_json(json_value, my_struct);
   bench_fast_simpler(my_struct);
   bench_nlohmann(my_struct);
+  bench_reflect_cpp(my_struct);
 
   return EXIT_SUCCESS;
 }

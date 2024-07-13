@@ -20,6 +20,13 @@ include(cmake/CPM.cmake)
 CPMAddPackage("gh:simdjson/simdjson@3.9.4")
 CPMAddPackage("gh:nlohmann/json@3.10.5")
 
+# Include reflect-cpp
+CPMAddPackage(
+  NAME reflect-cpp
+  GITHUB_REPOSITORY getml/reflect-cpp
+  GIT_TAG main
+)
+
 # Optionally, specify the C++ compiler directly (here we use clang++)
 add_subdirectory(src)
 add_subdirectory(examples)
