@@ -10,12 +10,12 @@
 #include <vector>
 #include <format>
 #include <atomic>
-#include <rfl.hpp>
-#include <rfl/json.hpp>
 #include "user_profile.hpp"
 #include "custom_serializer.h"
 #include "nlohmann_user_profile.hpp"
-
+#if SIMDJSON_BENCH_CPP_REFLECT
+#include "benchmark_reflect_serialization.hpp"
+#endif
 std::string generate_email(const std::string &name,
                            const std::string &company) {
   std::string email = name + "@" + company + ".com";
@@ -231,21 +231,6 @@ void bench_nlohmann(std::vector<User> &data) {
   );
 }
 
-void bench_reflect_cpp(std::vector<User>& data) {
-  std::string output = rfl::json::write(data);
-  size_t output_volume = output.size();
-  printf("# output volume: %zu bytes\n", output_volume);
-
-  volatile size_t measured_volume = 0;
-  pretty_print(
-    1, output_volume, "bench_reflect_cpp",
-    bench([&data, &measured_volume, &output_volume] () {
-      std::string output = rfl::json::write(data);
-      measured_volume = output.size();
-      if(measured_volume != output_volume) { printf("mismatch\n"); }
-    })
-  );
-}
 
 
 int main() {
@@ -257,7 +242,8 @@ int main() {
   bench_nlohmann(test_data);
   bench_custom(test_data);
   bench_fast_simpler(test_data);
+#if SIMDJSON_BENCH_CPP_REFLECT
   bench_reflect_cpp(test_data);
-
+#endif
   return EXIT_SUCCESS;
 }

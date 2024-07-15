@@ -1,7 +1,6 @@
 #include "../../src/from_json.hpp"
 #include "twitter_data.hpp"
 #include "nlohmann_twitter_data.hpp"
-#include "event_counter.h"
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
@@ -12,49 +11,10 @@
 #include <simdjson.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <rfl.hpp>
-#include <rfl/json.hpp>
-
-event_collector collector;
-
-template <class function_type>
-event_aggregate bench(const function_type &function, size_t min_repeat = 10,
-                      size_t min_time_ns = 1000000000,
-                      size_t max_repeat = 100000) {
-  event_aggregate aggregate{};
-  size_t N = min_repeat;
-  if (N == 0) {
-    N = 1;
-  }
-  for (size_t i = 0; i < N; i++) {
-    std::atomic_thread_fence(std::memory_order_acquire);
-    collector.start();
-    function();
-    std::atomic_thread_fence(std::memory_order_release);
-    event_count allocate_count = collector.end();
-    aggregate << allocate_count;
-    if ((i + 1 == N) && (aggregate.total_elapsed_ns() < min_time_ns) &&
-        (N < max_repeat)) {
-      N *= 10;
-    }
-  }
-  return aggregate;
-}
-
-// Source of the 2 functions below:
-// https://github.com/simdutf/simdutf/blob/master/benchmarks/base64/benchmark_base64.cpp
-void pretty_print(size_t strings, size_t bytes, std::string name, event_aggregate agg) {
-  printf("%-60s : ", name.c_str());
-  printf(" %5.2f MB/s ", bytes * 1000 / agg.elapsed_ns());
-  printf(" %5.2f Ms/s ", strings * 1000 / agg.elapsed_ns());
-  if (collector.has_events()) {
-    printf(" %5.2f GHz ", agg.cycles() / agg.elapsed_ns());
-    printf(" %5.2f c/b ", agg.cycles() / bytes);
-    printf(" %5.2f i/b ", agg.instructions() / bytes);
-    printf(" %5.2f i/c ", agg.instructions() / agg.cycles());
-  }
-  printf("\n");
-}
+#include "benchmark_helper.hpp"
+#if SIMDJSON_BENCH_CPP_REFLECT
+#include "benchmark_reflect_serialization_twitter.hpp"
+#endif
 
 template <class T>
 void bench_fast_simpler(T &data) {
@@ -92,21 +52,6 @@ void bench_nlohmann(TwitterData &data) {
   );
 }
 
-void bench_reflect_cpp(TwitterData& data) {
-  std::string output = rfl::json::write(data);
-  size_t output_volume = output.size();
-  printf("# output volume: %zu bytes\n", output_volume);
-
-  volatile size_t measured_volume = 0;
-  pretty_print(
-    1, output_volume, "bench_reflect_cpp",
-    bench([&data, &measured_volume, &output_volume] () {
-      std::string output = rfl::json::write(data);
-      measured_volume = output.size();
-      if(measured_volume != output_volume) { printf("mismatch\n"); }
-    })
-  );
-}
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
@@ -233,7 +178,8 @@ int main()
   experimental_json_builder::from_json(json_value, my_struct);
   bench_fast_simpler(my_struct);
   bench_nlohmann(my_struct);
+#if SIMDJSON_BENCH_CPP_REFLECT
   bench_reflect_cpp(my_struct);
-
+#endif
   return EXIT_SUCCESS;
 }
