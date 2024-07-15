@@ -24,7 +24,7 @@ CPMAddPackage("gh:nlohmann/json@3.10.5")
 CPMAddPackage(
   NAME reflect-cpp
   GITHUB_REPOSITORY getml/reflect-cpp
-  GIT_TAG main
+  GIT_TAG v0.13.0
 )
 
 # Optionally, specify the C++ compiler directly (here we use clang++)
