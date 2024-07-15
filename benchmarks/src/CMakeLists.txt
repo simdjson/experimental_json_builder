@@ -74,4 +74,5 @@ endif()
 
 target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial nlohmann_json::nlohmann_json simdjson::simdjson)
 
+
 target_compile_definitions(SerializationTwitterBenchmark PRIVATE JSON_FILE="${CMAKE_CURRENT_SOURCE_DIR}/data/twitter.json")
