@@ -1,15 +1,12 @@
 #pragma once
-
-#include <iostream>
+#include "simdjson/json_builder/json_builder.h"
 #include <string>
-#include <unordered_map>
 #include <vector>
-#include <charconv>
 #include <experimental/meta> // Reflection header
-#include "experimental_json_builder.hpp" // We might want to extract the concepts + metaprogramming to a separate header and include here and in the builder
 #include "json_parser.hpp"
 
-namespace experimental_json_builder {
+namespace simpleparser {
+namespace json_builder {
 
 using JsonValue = json_parser::JsonValue;
 using JsonValueType = json_parser::JsonValueType;
@@ -39,16 +36,16 @@ void from_json(const JsonValue& j, std::string& t) {
 }
 
 template <class T>
-void from_json(const JsonValue& j, std::vector<T>& t) requires ContainerButNotString<std::vector<T>>;
+void from_json(const JsonValue& j, std::vector<T>& t) requires simdjson::json_builder::ContainerButNotString<std::vector<T>>;
 
 template <class T>
-void from_json(const JsonValue& j, T& obj) requires(UserDefinedType<T> && !ContainerButNotString<T> && !std::is_same_v<T, std::string> && !std::is_same_v<T, std::string_view> && !std::is_same_v<T, const char *>) {
+void from_json(const JsonValue& j, T& obj) requires(simdjson::json_builder::UserDefinedType<T> && !simdjson::json_builder::ContainerButNotString<T> && !std::is_same_v<T, std::string> && !std::is_same_v<T, std::string_view> && !std::is_same_v<T, const char *>) {
     if (j.type != JsonValueType::Object) {
         throw std::runtime_error("Expected object type for user-defined type value");
     }
 
     // Using reflection to iterate over data members
-    [:expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
+    [:simdjson::json_builder::expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
         constexpr auto name = std::meta::name_of(dm);
         auto it = j.object_value.find(std::string(reinterpret_cast<const char*>(name.data()), name.size()));
         if (it != j.object_value.end()) {
@@ -58,7 +55,7 @@ void from_json(const JsonValue& j, T& obj) requires(UserDefinedType<T> && !Conta
 }
 
 template <class T>
-void from_json(const JsonValue& j, std::vector<T>& t) requires ContainerButNotString<std::vector<T>> {
+void from_json(const JsonValue& j, std::vector<T>& t) requires simdjson::json_builder::ContainerButNotString<std::vector<T>> {
     if (j.type != JsonValueType::Array) {
         throw std::runtime_error("Expected array type for container value");
     }
@@ -71,4 +68,5 @@ void from_json(const JsonValue& j, std::vector<T>& t) requires ContainerButNotSt
 }
 
 
-} // namespace experimental_json_builder
+} // namespace json_builder
+} // namespace simpleparser

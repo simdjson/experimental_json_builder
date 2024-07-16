@@ -1,6 +1,8 @@
-#pragma once
-#include "json_escaping.hpp"
-#include "string_builder.hpp"
+#ifndef SIMDJSON_SERIALIZATION_JSON_BUILDER_HPP
+#define SIMDJSON_SERIALIZATION_JSON_BUILDER_HPP
+
+#include "json_escaping.h"
+#include "string_builder.h"
 #include <charconv>
 #include <cstring>
 #include <experimental/meta>
@@ -9,7 +11,9 @@
 #include <utility>
 #include <vector>
 
-namespace experimental_json_builder {
+namespace simdjson {
+
+namespace json_builder {
 
 // Concept that checks if a type is a container but not a string (because
 // strings handling must be handled differently)
@@ -72,8 +76,7 @@ constexpr void atom(StringBuilder &b, const T &t) {
   b.append(t);
 }
 
-template <arithmetic T>
-constexpr void atom(StringBuilder &b, const T t) {
+template <arithmetic T> constexpr void atom(StringBuilder &b, const T t) {
   b.append(t);
 }
 
@@ -88,8 +91,9 @@ constexpr void atom(StringBuilder &b, const T &t) {
   [:expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
     if (i != 0)
       b.append(',');
-    constexpr auto v = simdjson::experimental::json_escaping::to_quoted_escaped(
-        std::meta::name_of(dm));
+    constexpr auto v =
+        simdjson::json_builder::json_escaping::to_quoted_escaped(
+            std::meta::name_of(dm));
     b.append_unescaped(v);
     b.append(':');
     atom(b, t.[:dm:]);
@@ -105,8 +109,9 @@ template <class Z> void fast_to_json_string(StringBuilder &b, const Z &z) {
   [:expand(std::meta::nonstatic_data_members_of(^Z)):] >> [&]<auto dm> {
     if (i != 0)
       b.append(',');
-    constexpr auto v = simdjson::experimental::json_escaping::to_quoted_escaped(
-        std::meta::name_of(dm));
+    constexpr auto v =
+        simdjson::json_builder::json_escaping::to_quoted_escaped(
+            std::meta::name_of(dm));
     b.append_unescaped(v);
     b.append(':');
     atom(b, z.[:dm:]);
@@ -132,4 +137,7 @@ void fast_to_json_string(StringBuilder &b, const Z &z) {
   b.append(']');
 }
 
-} // namespace fast_json_serializer_simpler
+} // namespace json_builder
+
+} // namespace simdjson
+#endif

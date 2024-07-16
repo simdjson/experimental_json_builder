@@ -1,19 +1,18 @@
-#include "experimental_json_builder.hpp"
-#include "json_escaping.hpp"
+#include "benchmark_helper.hpp"
+#include "custom_serializer.h"
 #include "event_counter.h"
+#include "nlohmann_user_profile.hpp"
+#include "simdjson/json_builder/json_builder.h"
+#include "user_profile.hpp"
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <ctime>
+#include <format>
 #include <iostream>
 #include <random>
 #include <string>
 #include <vector>
-#include <format>
-#include <atomic>
-#include "user_profile.hpp"
-#include "custom_serializer.h"
-#include "nlohmann_user_profile.hpp"
-#include "benchmark_helper.hpp"
 
 #if SIMDJSON_BENCH_CPP_REFLECT
 #include "benchmark_reflect_serialization.hpp"
@@ -104,38 +103,45 @@ User generate_random_user() {
   return user;
 }
 
-
 void bench_custom(std::vector<User> &data) {
-  size_t volume = std::accumulate(data.begin(), data.end(), size_t(0), [](size_t a, const User &b) { return a + sizeof(b); });
+  size_t volume =
+      std::accumulate(data.begin(), data.end(), size_t(0),
+                      [](size_t a, const User &b) { return a + sizeof(b); });
   std::vector<char> buff(8192);
 
-  size_t output_volume = std::accumulate(data.begin(), data.end(), size_t(0), [&buff](size_t a, const User &b) {
-    return a + custom::serialize(b, buff.data());
-  });
+  size_t output_volume = std::accumulate(
+      data.begin(), data.end(), size_t(0), [&buff](size_t a, const User &b) {
+        return a + custom::serialize(b, buff.data());
+      });
 
   size_t max_string_length = custom::serialize(data[0], buff.data());
   size_t min_string_length = max_string_length;
 
   for (size_t i = 1; i < data.size(); i++) {
     size_t this_size = custom::serialize(data[i], buff.data());
-    if (this_size > max_string_length) { max_string_length = this_size; }
-    if (this_size < min_string_length) { min_string_length = this_size; }
+    if (this_size > max_string_length) {
+      max_string_length = this_size;
+    }
+    if (this_size < min_string_length) {
+      min_string_length = this_size;
+    }
   }
 
   std::vector<char> output(2 * max_string_length); // plenty of memory.
   output_volume = 0;
 
-  for (const User& x : data) {
+  for (const User &x : data) {
     output_volume += custom::serialize(x, output.data());
   }
 
-  size_t max_size = sizeof(std::max_element(data.begin(), data.end(), [](const User &a, const User &b) {
-    return sizeof(a) > sizeof(b);
-  }));
+  size_t max_size = sizeof(std::max_element(
+      data.begin(), data.end(),
+      [](const User &a, const User &b) { return sizeof(a) > sizeof(b); }));
 
   printf("# volume: %zu bytes\n", volume);
   printf("# output volume: %zu bytes\n", output_volume);
-  printf("# output volume per string: %0.1f bytes\n", double(output_volume) / data.size());
+  printf("# output volume per string: %0.1f bytes\n",
+         double(output_volume) / data.size());
   printf("# min output volume per string: %zu bytes\n", max_string_length);
   printf("# max output volume per string: %zu bytes\n", min_string_length);
 
@@ -144,38 +150,37 @@ void bench_custom(std::vector<User> &data) {
 
   printf("# serialization\n");
   volatile size_t measured_volume = 0;
-  pretty_print(
-    data.size(), output_volume, "experimental_json_builder::custom",
-    bench([&data, &measured_volume, &output_volume, &output] () {
-      measured_volume = 0;
-      for (const User& x : data) {
-        measured_volume += custom::serialize(x, output.data());
-      }
-      if (measured_volume != output_volume) { printf("mismatch\n"); }
-    })
-  );
+  pretty_print(data.size(), output_volume, "simdjson::json_builder::custom",
+               bench([&data, &measured_volume, &output_volume, &output]() {
+                 measured_volume = 0;
+                 for (const User &x : data) {
+                   measured_volume += custom::serialize(x, output.data());
+                 }
+                 if (measured_volume != output_volume) {
+                   printf("mismatch\n");
+                 }
+               }));
 }
 
-template <class T>
-void bench_fast_simpler(std::vector<T> &data) {
-  experimental_json_builder::StringBuilder b(32*1024*1024); // pre-allocate 32 MB
-  experimental_json_builder::fast_to_json_string(b, data);
+template <class T> void bench_fast_simpler(std::vector<T> &data) {
+  simdjson::json_builder::StringBuilder b(32 * 1024 *
+                                          1024); // pre-allocate 32 MB
+  simdjson::json_builder::fast_to_json_string(b, data);
   size_t output_volume = b.size();
   b.reset();
   printf("# output volume: %zu bytes\n", output_volume);
 
   volatile size_t measured_volume = 0;
-  pretty_print(
-    data.size(), output_volume, "bench_fast_simpler",
-    bench([&data, &measured_volume, &output_volume, &b] () {
-      b.reset();
-      experimental_json_builder::fast_to_json_string(b, data);
-      measured_volume = b.size();
-      if(measured_volume != output_volume) { printf("mismatch\n"); }
-    })
-  );
+  pretty_print(data.size(), output_volume, "bench_fast_simpler",
+               bench([&data, &measured_volume, &output_volume, &b]() {
+                 b.reset();
+                 simdjson::json_builder::fast_to_json_string(b, data);
+                 measured_volume = b.size();
+                 if (measured_volume != output_volume) {
+                   printf("mismatch\n");
+                 }
+               }));
 }
-
 
 void bench_nlohmann(std::vector<User> &data) {
   std::string output = nlohmann_serialize(data);
@@ -183,24 +188,23 @@ void bench_nlohmann(std::vector<User> &data) {
   printf("# output volume: %zu bytes\n", output_volume);
 
   volatile size_t measured_volume = 0;
-  pretty_print(
-    data.size(), output_volume, "bench_nlohmann",
-    bench([&data, &measured_volume, &output_volume] () {
-      std::string output = nlohmann_serialize(data);
-      measured_volume = output.size();
-      if(measured_volume != output_volume) { printf("mismatch\n"); }
-    })
-  );
+  pretty_print(data.size(), output_volume, "bench_nlohmann",
+               bench([&data, &measured_volume, &output_volume]() {
+                 std::string output = nlohmann_serialize(data);
+                 measured_volume = output.size();
+                 if (measured_volume != output_volume) {
+                   printf("mismatch\n");
+                 }
+               }));
 }
-
-
 
 int main() {
   constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
-  for(int i = 0; i < test_sz; ++i) test_data[i] = generate_random_user();
-  
-  std::vector<std::vector<User>> in_array = {  test_data  };
+  for (int i = 0; i < test_sz; ++i)
+    test_data[i] = generate_random_user();
+
+  std::vector<std::vector<User>> in_array = {test_data};
   bench_nlohmann(test_data);
   bench_custom(test_data);
   bench_fast_simpler(test_data);

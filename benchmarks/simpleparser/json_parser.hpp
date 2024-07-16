@@ -3,9 +3,9 @@
 #include <unordered_map>
 #include <vector>
 #include <sstream>
-#include <charconv>
 #include <experimental/meta>
 
+namespace simpleparser {
 namespace json_parser {
 
 enum class JsonValueType { Null, Boolean, Number, String, Array, Object };
@@ -216,3 +216,4 @@ private:
 };
 
 } // namespace json_parser
+} // namespace simpleparser

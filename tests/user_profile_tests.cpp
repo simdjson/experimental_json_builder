@@ -1,8 +1,9 @@
-#include "experimental_json_builder.hpp"
+
+#include "simdjson/json_builder/json_builder.h"
+#include "simdjson/json_builder/string_builder.h"
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 
-#include <chrono>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -149,8 +150,8 @@ User generate_random_user() {
 }
 
 std::string simdjson_serialize(const User &user) {
-  experimental_json_builder::StringBuilder b;
-  experimental_json_builder::fast_to_json_string(b, user);
+  simdjson::json_builder::StringBuilder b;
+  simdjson::json_builder::fast_to_json_string(b, user);
   return std::string(b.view());
 }
 

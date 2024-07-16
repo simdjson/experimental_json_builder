@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SIMDJSON_SERIALIZATION_JSON_ESCAPING_HPP
+#define SIMDJSON_SERIALIZATION_JSON_ESCAPING_HPP
 #include <array>
 #include <cstdint>
 #include <string>
@@ -26,7 +27,7 @@
 #endif
 
 namespace simdjson {
-namespace experimental {
+namespace json_builder {
 namespace json_escaping {
 
 static constexpr std::array<uint8_t, 256> json_quotable_character =
@@ -66,7 +67,6 @@ constexpr inline bool table_needs_escaping(std::string_view view) {
   return needs;
 }
 
-
 #if SIMDJSON_EXPERIMENTAL_HAS_NEON
 
 inline bool fast_needs_escaping(std::string_view view) {
@@ -83,7 +83,7 @@ inline bool fast_needs_escaping(std::string_view view) {
     running = vorrq_u8(running, vceqq_u8(word, v34));
     running = vorrq_u8(running, vceqq_u8(word, v92));
     running = vorrq_u8(running, vcltq_u8(word, vdupq_n_u8(32)));
-  }  
+  }
   if (i < view.size()) {
     uint8x16_t word =
         vld1q_u8((const uint8_t *)view.data() + view.length() - 16);
@@ -229,5 +229,6 @@ consteval std::string to_quoted_escaped(std::u8string_view input) {
   return out;
 }
 } // namespace json_escaping
-} // namespace experimental
+} // namespace json_builder
 } // namespace simdjson
+#endif // SIMDJSON_SERIALIZATION_JSON_ESCAPING_HPP
