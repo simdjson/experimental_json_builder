@@ -5,11 +5,31 @@ That is, we see to build fast and convenient code to map your data structure to 
 
 Ultimately, this work might cover both serialization and deserialization.
 
-We've seen different proposals forhttps://github.com/nlohmann/json?tab=readme-ov-file#simplify-your-life-with-macros C++ reflection, for now we will focus on the latest paper (https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r3.html#converting-a-struct-to-a-tuple) that is targeting C++26.
+We've seen different proposals for C++ reflection, for now we will focus on the [latest paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r3.html#converting-a-struct-to-a-tuple) that is targeting C++26.
 
-Some other references regarding other implementations of reflection in C++:
-- https://github.com/matus-chochlik/mirror/blob/develop/example/mirror/print_struct.cpp (depends on llvm-reflection branch + mirror library)
-- https://godbolt.org/z/eo3zrro4v (using boost/ext static reflection, latest version is not currently compiling)
+
+Table of Contents
+-----------------
+
+* [Why we are interested in (de)serializing using reflection?](#why-we-are-interested-in-deserializing-using-reflection)
+* [Current status](#current-status)
+* [Instructions for running the toy_builder example locally (using docker)](#instructions-for-running-the-toy_builder-example-locally-using-docker)
+* [Instructions for running it natively on macOS](#instructions-for-running-it-natively-on-macos)
+   + [1. Install Homebrew](#1-install-homebrew)
+   + [2. Install Necessary Packages](#2-install-necessary-packages)
+   + [3. Clone the Clang Source Code](#3-clone-the-clang-source-code)
+   + [4. Create a Build Directory](#4-create-a-build-directory)
+   + [5. Configure the Build](#5-configure-the-build)
+   + [6. Build LLVM/Clang](#6-build-llvmclang)
+   + [7. Install LLVM/Clang](#7-install-llvmclang)
+   + [8. Configure the Dynamic Linker](#8-configure-the-dynamic-linker)
+   + [9. Verify the Installation](#9-verify-the-installation)
+   + [10. Running the project](#10-running-the-project)
+   + [Running tests](#running-tests)
+   + [Additional comments regarding running natively on macOS](#additional-comments-regarding-running-natively-on-macos)
+* [Profiling](#profiling)
+* [References](#references)
+
 
 ## Why we are interested in (de)serializing using reflection?
 If you take a look at one of the reference implementations of (de)serialization
@@ -105,7 +125,7 @@ under macOS, you are doing so at your own risks.
 
 Here are the step-by-step instructions:
 
-### 1. Install Homebrew
+#### 1. Install Homebrew
 
 If you don't already have Homebrew installed, install it by running:
 
@@ -249,3 +269,10 @@ sudo apt-get install linux-perf
 ```
 
 Your password inside the docker container is your username.
+
+## References
+
+
+Some other references regarding other implementations of reflection in C++:
+- https://github.com/matus-chochlik/mirror/blob/develop/example/mirror/print_struct.cpp (depends on llvm-reflection branch + mirror library)
+- https://godbolt.org/z/eo3zrro4v (using boost/ext static reflection, latest version is not currently compiling)
