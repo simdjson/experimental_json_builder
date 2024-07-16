@@ -95,13 +95,17 @@ git clone https://github.com/simdjson/experimental_json_builder.git
 
 2. Make sure that you have [docker installed and running](https://docs.docker.com/engine/install/) on your system. Most Linux distributions support docker though some (like RedHat) have the equivalent (Podman). Users of Apple systems may want to [consider OrbStack](https://orbstack.dev). You do not need to familiar with docker, you just need to make sure that you are have it running.
 
-3. Navigate to our repository `experimental_json_builder` and run
+3. Navigate to our repository `experimental_json_builder` and run the following bash script:
 
 ```bash
-./run_docker.sh bash`
+bash run_docker.sh bash
 ```
 
+
+
 This will enter a bash shell with access to the repo directory. Note that this will take some time when running it for the first time, since the specific container image has to be built. 
+
+This step builds and executes a docker container defined by our [Dockerfile](https://github.com/simdjson/experimental_json_builder/blob/main/Dockerfile) which provides the necessary environment.
 
 
 4. Configure the build system with cmake:
@@ -126,7 +130,7 @@ ctest --test-dir build --output-on-failure
 ./build/benchmarks/src/SerializationBenchmark
 ```
 
-You can modify the source code with your favorite editor and run again steps 5 (Build the code) and 6 (Run the tests) and 7 (Run the benchmark).
+You can modify the source code with your favorite editor and run again steps 6 (Build the code) and 7 (Run the tests) and 8 (Run the benchmark).
 
 ## Instructions for running it natively on macOS
 
