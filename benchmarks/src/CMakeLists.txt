@@ -64,7 +64,7 @@ target_link_libraries(SerializationBenchmark PRIVATE simdjson-serial nlohmann_js
 
 # cpp-reflect may fail to build on LLVM 19 due to this issue
 # https://github.com/hanickadot/compile-time-regular-expressions/issues/307
-option(SIMDJSON_BENCH_CPP_REFLECT "include cpp reflect in the benchmarks" OFF)
+option(SIMDJSON_BENCH_CPP_REFLECT "include cpp reflect in the benchmarks" ON)
 if(SIMDJSON_BENCH_CPP_REFLECT)
   message(STATUS "Including reflect-cpp in the benchmarks.")
   add_library(benchmark_reflect_serialization_twitter STATIC benchmark_reflect_serialization_twitter.cpp)
@@ -74,7 +74,7 @@ if(SIMDJSON_BENCH_CPP_REFLECT)
   target_compile_definitions(SerializationTwitterBenchmark PRIVATE SIMDJSON_BENCH_CPP_REFLECT=1)
 
 
-  add_library(benchmark_reflect_serialization STATIC benchmark_reflect_serialization_twitter.cpp)
+  add_library(benchmark_reflect_serialization STATIC benchmark_reflect_serialization.cpp)
   target_link_libraries(benchmark_reflect_serialization PRIVATE reflectcpp)
 
   target_link_libraries(SerializationBenchmark PRIVATE benchmark_reflect_serialization)
