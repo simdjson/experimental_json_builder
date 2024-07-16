@@ -1,12 +1,17 @@
-#pragma once
-#include <vector>
-#include <string>
-#include <string_view>
+#ifndef SIMDJSON_SERIALIZATION_STRING_BUILDER_HPP
+#define SIMDJSON_SERIALIZATION_STRING_BUILDER_HPP
+#include "simdjson/json_builder/json_escaping.h"
 #include <cstring>
 #include <format>
+#include <string>
+#include <string_view>
+#include <vector>
 
-namespace experimental_json_builder {
-template <typename T> concept arithmetic = std::is_arithmetic_v<T>;
+namespace simdjson {
+
+namespace json_builder {
+template <typename T>
+concept arithmetic = std::is_arithmetic_v<T>;
 
 class StringBuilder final {
 public:
@@ -15,8 +20,7 @@ public:
       : buffer(new char[initial_capacity]), position(0),
         capacity(initial_capacity) {}
 
-  template <arithmetic number_type>
-  inline void append(number_type v) {
+  template <arithmetic number_type> inline void append(number_type v) {
     if constexpr (std::is_same_v<number_type, bool>) {
       if (v) {
         constexpr char true_literal[] = "true";
@@ -31,35 +35,36 @@ public:
         std::memcpy(buffer.get() + position, false_literal, false_len);
         position += false_len;
       }
-    }
-    else
-    {
+    } else {
       auto result =
           std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
-      if(result.ec != std::errc()) {
+      if (result.ec != std::errc()) {
         constexpr size_t max_number_size = 20;
         capacity_check(max_number_size);
         result =
-          std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
+            std::to_chars(buffer.get() + position, buffer.get() + capacity, v);
       }
       position = result.ptr - buffer.get();
     }
   }
 
-  inline void append(char c) { capacity_check(1); buffer[position++] = c; }
+  inline void append(char c) {
+    capacity_check(1);
+    buffer[position++] = c;
+  }
 
   void reset() { position = 0; }
 
   inline void append_escaped_json(std::string_view input) {
-    capacity_check(6*input.size());
-    position += simdjson::experimental::json_escaping::write_string_escaped(
+    capacity_check(6 * input.size());
+    position += simdjson::json_builder::json_escaping::write_string_escaped(
         input, buffer.get() + position);
   }
 
   inline void append_quoted_escaped_json(std::string_view input) {
-    capacity_check(2+6*input.size());
+    capacity_check(2 + 6 * input.size());
     buffer[position++] = '"';
-    position += simdjson::experimental::json_escaping::write_string_escaped(
+    position += simdjson::json_builder::json_escaping::write_string_escaped(
         input, buffer.get() + position);
     buffer[position++] = '"';
   }
@@ -96,13 +101,13 @@ public:
 
 private:
   inline void capacity_check(size_t upcoming_writes) {
-    if(position + upcoming_writes > capacity) {
+    if (position + upcoming_writes > capacity) {
       // We use a simple doubling algorithm.
       size_t new_capacity = capacity * 2;
-      if(new_capacity < capacity) {
+      if (new_capacity < capacity) {
         throw std::runtime_error("overflow");
       }
-      char* new_buffer = new char[new_capacity];
+      char *new_buffer = new char[new_capacity];
       std::memcpy(new_buffer, buffer.get(), position);
       buffer.reset(new_buffer);
       capacity = new_capacity;
@@ -113,4 +118,7 @@ private:
   size_t capacity;
 };
 
-} // namespace experimental_json_builder
+} // namespace json_builder
+
+} // namespace simdjson
+#endif // SIMDJSON_SERIALIZATION_STRING_BUILDER_HPP

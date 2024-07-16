@@ -1,10 +1,11 @@
-#include "../src/experimental_json_builder.hpp"
-#include "../src/string_builder.hpp"
+#include "simdjson/json_builder/json_builder.h"
+#include "simdjson/json_builder/string_builder.h"
+#include <cstdlib>
+#include <format>
+#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
-#include <format>
-#include <print>
-#include <iostream>
 
 struct Z {
   int x;
@@ -13,7 +14,7 @@ struct Z {
 struct Y {
   int g;
   std::string h;
-  std::vector<int> i; 
+  std::vector<int> i;
   Z z;
 };
 
@@ -27,10 +28,6 @@ struct X {
   Y y;
 };
 
-// template <> struct std::formatter<Y> : universal_formatter { }; -> not needed when dealing with structs
-// todo -> test the limitations of both methods with private/protected members, as well as with inheritance
-// template <> struct std::formatter<X> : experimental_json_builder::universal_formatter { };
-
 int main() {
   X s1 = {.a = '1',
           .b = 10,
@@ -38,15 +35,13 @@ int main() {
           .d = "test string\n\r\"",
           .e = {1, 2, 3},
           .f = {"ab", "cd", "fg"},
-          .y = {.g = 100, .h = "test string\n\r\"", .i = {1, 2, 3}, .z = {.x = 1000}}};
+          .y = {.g = 100,
+                .h = "test string\n\r\"",
+                .i = {1, 2, 3},
+                .z = {.x = 1000}}};
 
-  experimental_json_builder::StringBuilder sb;
-  experimental_json_builder::fast_to_json_string(sb, s1);
+  simdjson::json_builder::StringBuilder sb;
+  simdjson::json_builder::fast_to_json_string(sb, s1);
   std::cout << sb.c_str() << std::endl;
-  
-  // std::cout << experimental_json_builder::fast_to_json_string(sb,s1) << std::endl << std::endl;
-
-  // std::println("{}", s1);
-
-  return 0;
+  return EXIT_SUCCESS;
 }

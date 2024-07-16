@@ -3,7 +3,7 @@
 #include "event_counter.h"
 #include <atomic>
 
-inline event_collector& get_collector() {
+inline event_collector &get_collector() {
   static event_collector collector;
   return collector;
 }
@@ -12,7 +12,7 @@ template <class function_type>
 event_aggregate bench(const function_type &function, size_t min_repeat = 10,
                       size_t min_time_ns = 1000000000,
                       size_t max_repeat = 100000) {
- event_collector& collector = get_collector();
+  event_collector &collector = get_collector();
   event_aggregate aggregate{};
   size_t N = min_repeat;
   if (N == 0) {
@@ -35,8 +35,9 @@ event_aggregate bench(const function_type &function, size_t min_repeat = 10,
 
 // Source of the 2 functions below:
 // https://github.com/simdutf/simdutf/blob/master/benchmarks/base64/benchmark_base64.cpp
-inline void pretty_print(size_t strings, size_t bytes, std::string name, event_aggregate agg) {
-  event_collector& collector = get_collector();
+inline void pretty_print(size_t strings, size_t bytes, std::string name,
+                         event_aggregate agg) {
+  event_collector &collector = get_collector();
   printf("%-60s : ", name.c_str());
   printf(" %5.2f MB/s ", bytes * 1000 / agg.elapsed_ns());
   printf(" %5.2f Ms/s ", strings * 1000 / agg.elapsed_ns());

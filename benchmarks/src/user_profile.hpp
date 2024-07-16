@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-
 /* This struct is based on one example from the
  * https://app.json-generator.com/9jQKNGW0cMIA */
 

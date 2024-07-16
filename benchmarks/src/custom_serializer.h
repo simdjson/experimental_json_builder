@@ -1,4 +1,5 @@
-#include "../../src/json_escaping.hpp"
+#include "simdjson/json_builder/json_escaping.h"
+#include "user_profile.hpp"
 // For reference, we create a custom serializer.
 namespace custom {
 
@@ -35,7 +36,9 @@ size_t write_quoted_string_direct(const char *name, char *out) {
 size_t write_quoted_string_escaped(std::string_view input, char *out) {
   const char *const initout = out;
   *out++ = '"';
-  size_t location = simdjson::experimental::json_escaping::find_next_json_quotable_character(input, 0);
+  size_t location =
+      simdjson::json_builder::json_escaping::find_next_json_quotable_character(
+          input, 0);
   if (location == input.size()) {
     // no escaping (fast path)
     memcpy(out, input.data(), input.size());
@@ -48,7 +51,8 @@ size_t write_quoted_string_escaped(std::string_view input, char *out) {
     input.remove_prefix(1);
     // could be optimized in various ways
     while (!input.empty()) {
-      location = simdjson::experimental::json_escaping::find_next_json_quotable_character(input, 0);
+      location = simdjson::json_builder::json_escaping::
+          find_next_json_quotable_character(input, 0);
       memcpy(out, input.data(), location);
       out += location;
       input.remove_prefix(location);
