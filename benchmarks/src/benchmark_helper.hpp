@@ -1,6 +1,7 @@
 #ifndef BENCHMARK_HELPER_HPP
 #define BENCHMARK_HELPER_HPP
 #include "event_counter.h"
+#include <atomic>
 
 inline event_collector& get_collector() {
   static event_collector collector;
