@@ -101,31 +101,35 @@ git clone https://github.com/simdjson/experimental_json_builder.git
 bash run_docker.sh bash
 ```
 
-
-
 This will enter a bash shell with access to the repo directory. Note that this will take some time when running it for the first time, since the specific container image has to be built. 
 
 This step builds and executes a docker container defined by our [Dockerfile](https://github.com/simdjson/experimental_json_builder/blob/main/Dockerfile) which provides the necessary environment.
 
 
-4. Configure the build system with cmake:
+4. The project has some dependencies and you may want to avoid redownloading them. Thus you should set the cache directory:
+
+```bash
+export CPM_SOURCE_CACHE=.cache/CPM
+```
+
+5. Configure the build system with cmake:
 ```bash
 cmake -B build
 ```
 This only needs to be done once.
 
-5. Build the code...
+6. Build the code...
 ```bash
 cmake --build build
 ```
 
 
-6. Run the tests...
+7. Run the tests...
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-7. Run the benchmark.
+8. Run the benchmark.
 ```bash
 ./build/benchmarks/src/SerializationBenchmark
 ```
