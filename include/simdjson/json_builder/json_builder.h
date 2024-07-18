@@ -93,7 +93,7 @@ constexpr void atom(StringBuilder &b, const T &t) {
       b.append(',');
     constexpr auto v =
         simdjson::json_builder::json_escaping::to_quoted_escaped(
-            std::meta::name_of(dm));
+            std::meta::identifier_of(dm));
     b.append_unescaped(v);
     b.append(':');
     atom(b, t.[:dm:]);
@@ -111,7 +111,7 @@ template <class Z> void fast_to_json_string(StringBuilder &b, const Z &z) {
       b.append(',');
     constexpr auto v =
         simdjson::json_builder::json_escaping::to_quoted_escaped(
-            std::meta::name_of(dm));
+            std::meta::identifier_of(dm));
     b.append_unescaped(v);
     b.append(':');
     atom(b, z.[:dm:]);
