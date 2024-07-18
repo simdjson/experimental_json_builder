@@ -5,8 +5,8 @@ That is, we see to build fast and convenient code to map your data structure to 
 
 Ultimately, this work might cover both serialization and deserialization.
 
-We've seen different proposals for C++ reflection, for now we will focus on the [latest paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r3.html#converting-a-struct-to-a-tuple) that is targeting C++26.
-
+We've seen different proposals for C++ reflection, for now we will focus on the [latest p2996 paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r4.html) that is targeting C++26.
+https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r4.html
 
 Table of Contents
 -----------------
@@ -72,7 +72,7 @@ As of now, we were able to implement this with ~1k lines of code (and that is in
 The benchmark results show that our serialization speed can be 20/30x faster than [nlohmann](https://github.com/nlohmann/json).
 
 ## Current status
-There are 2 versions of compiler that aim to support the C++ 26 reflection paper.
+There are 2 versions of compiler that aim to support the C++26 reflection paper ([p2996](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r4.html)).
 
 1. [Clang-p2996 llvm branch](https://github.com/bloomberg/clang-p2996/tree/p2996) that open-source and available in the [Compiler Explorer](https://godbolt.org/z/eoEej3E6j).
 2. EDG reflection branch that is only publicly available in the [Compiler Explorer](https://godbolt.org).
