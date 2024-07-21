@@ -52,9 +52,12 @@ target_include_directories(
 )
 
 include(cmake/CPM.cmake)
-# include simdjson
-CPMAddPackage("gh:simdjson/simdjson@3.9.4")
-
+CPMAddPackage(
+  NAME simdjson
+  GITHUB_REPOSITORY simdjson/simdjson
+  PATCHES simdjson.patch
+  GIT_TAG v3.9.4
+)
 
 add_subdirectory(examples)
 add_subdirectory(benchmarks)
