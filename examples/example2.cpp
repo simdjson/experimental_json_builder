@@ -96,58 +96,62 @@ simdjson_inline simdjson_result<T> simdjson::ondemand::value::get() noexcept {
 template <typename T>
 simdjson_inline simdjson_result<T>
 simdjson::ondemand::document::get() & noexcept {
-  ondemand::array array;
-  auto error = get_array().get(array);
-  if (error) {
-    return error;
-  }
-  T container;
-  for (auto v : array) {
-    typename T::value_type val;
-    if constexpr (std::is_same_v<typename T::value_type, double>) {
-      error = v.get_double().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, bool>) {
-      error = v.get_bool().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, uint64_t>) {
-      error = v.get_uint64().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, int64_t>) {
-      error = v.get_int64().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, int>) {
-      int64_t temp_val;
-      error = v.get_int64().get(temp_val);
-      if (!error) {
-        val = static_cast<int>(temp_val);
-      }
-    } else if constexpr (std::is_same_v<typename T::value_type, std::string>) {
-      std::string str_val;
-      error = v.get_string(str_val);
-      if (!error) {
-        val = std::move(str_val);
-      }
-    } else if constexpr (std::is_same_v<typename T::value_type,
-                                        std::string_view>) {
-      std::string_view str_view_val;
-      error = v.get_string(str_view_val, false);
-      if (!error) {
-        val = str_view_val;
-      }
-    } else if constexpr (std::is_same_v<typename T::value_type,
-                                        simdjson::ondemand::raw_json_string>) {
-      simdjson::ondemand::raw_json_string raw_val;
-      error = v.get_raw_json_string().get(raw_val);
-      if (!error) {
-        val = raw_val;
-      }
-    } else {
-      static_assert(!sizeof(T), "Unsupported value type in the container.");
-    }
-
+  if constexpr (PushableContainer<T>) {
+    ondemand::array array;
+    auto error = get_array().get(array);
     if (error) {
       return error;
     }
-    container.push_back(std::move(val));
+    T container;
+    for (auto v : array) {
+      typename T::value_type val;
+      if constexpr (std::is_same_v<typename T::value_type, double>) {
+        error = v.get_double().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, bool>) {
+        error = v.get_bool().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, uint64_t>) {
+        error = v.get_uint64().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, int64_t>) {
+        error = v.get_int64().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, int>) {
+        int64_t temp_val;
+        error = v.get_int64().get(temp_val);
+        if (!error) {
+          val = static_cast<int>(temp_val);
+        }
+      } else if constexpr (std::is_same_v<typename T::value_type, std::string>) {
+        std::string str_val;
+        error = v.get_string(str_val);
+        if (!error) {
+          val = std::move(str_val);
+        }
+      } else if constexpr (std::is_same_v<typename T::value_type,
+                                          std::string_view>) {
+        std::string_view str_view_val;
+        error = v.get_string(str_view_val, false);
+        if (!error) {
+          val = str_view_val;
+        }
+      } else if constexpr (std::is_same_v<typename T::value_type,
+                                          simdjson::ondemand::raw_json_string>) {
+        simdjson::ondemand::raw_json_string raw_val;
+        error = v.get_raw_json_string().get(raw_val);
+        if (!error) {
+          val = raw_val;
+        }
+      } else {
+        static_assert(!sizeof(T), "Unsupported value type in the container.");
+      }
+
+      if (error) {
+        return error;
+      }
+      container.push_back(std::move(val));
+    }
+    return container;
+  } else {
+    static_assert(!sizeof(T), "Unsupported container type.");
   }
-  return container;
 }
 
 template <>
