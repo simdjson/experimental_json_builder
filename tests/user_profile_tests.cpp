@@ -299,5 +299,6 @@ int main() {
       return EXIT_FAILURE;
     }
   }
+  printf("\n");
   return EXIT_SUCCESS;
 }
