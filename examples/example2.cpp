@@ -5,10 +5,9 @@
 #include <iostream>
 #include <print>
 #include <string>
-#include <vector>
 #include <type_traits>
+#include <vector>
 using namespace simdjson;
-
 
 struct MyStruct {
   int id;
@@ -32,59 +31,13 @@ struct X {
   Y y;
 };
 
-/*
-// todo: use reflection to generate
-template <>
-simdjson_inline simdjson_result<std::vector<int>>
-simdjson::ondemand::value::get() noexcept {
-  ondemand::array array;
-  auto error = get_array().get(array);
-  if (error) {
-    return error;
-  }
-  std::vector<int> vec;
-  for (auto v : array) {
-    int64_t val;
-    error = v.get_int64().get(val);
-    if (error) {
-      return error;
-    }
-    vec.push_back(int(val));
-  }
-  return vec;
-}
-
-// todo: use reflection to generate
-template <>
-simdjson_inline simdjson_result<std::vector<std::string>>
-simdjson::ondemand::value::get() noexcept {
-  ondemand::array array;
-  auto error = get_array().get(array);
-  if (error) {
-    return error;
-  }
-  std::vector<std::string> vec;
-  for (auto v : array) {
-    std::string t;
-    error = v.get_string(t);
-    if (error) {
-      return error;
-    }
-    vec.push_back(t);
-  }
-  return vec;
-}*/
-
 template <typename T>
 concept PushableContainer =
-    requires(T a, typename T::value_type val) {
-      a.push_back(val);
-    } && !std::is_same_v<T, std::string> &&
-    !std::is_same_v<T, std::string_view> && 
-    !std::is_same_v<T, const char*>;
+    requires(T a, typename T::value_type val) { a.push_back(val); } &&
+    !std::is_same_v<T, std::string> && !std::is_same_v<T, std::string_view> &&
+    !std::is_same_v<T, const char *>;
 
-template <typename T>
-  requires PushableContainer<T>
+template <class T>
 simdjson_inline simdjson_result<T> simdjson::ondemand::value::get() noexcept {
   ondemand::array array;
   auto error = get_array().get(array);
@@ -114,13 +67,15 @@ simdjson_inline simdjson_result<T> simdjson::ondemand::value::get() noexcept {
       if (!error) {
         val = std::move(str_val);
       }
-    } else if constexpr (std::is_same_v<typename T::value_type, std::string_view>) {
+    } else if constexpr (std::is_same_v<typename T::value_type,
+                                        std::string_view>) {
       std::string_view str_view_val;
       error = v.get_string(str_view_val, false);
       if (!error) {
         val = str_view_val;
       }
-    } else if constexpr (std::is_same_v<typename T::value_type, simdjson::ondemand::raw_json_string>) {
+    } else if constexpr (std::is_same_v<typename T::value_type,
+                                        simdjson::ondemand::raw_json_string>) {
       simdjson::ondemand::raw_json_string raw_val;
       error = v.get_raw_json_string().get(raw_val);
       if (!error) {
@@ -138,16 +93,65 @@ simdjson_inline simdjson_result<T> simdjson::ondemand::value::get() noexcept {
   return container;
 }
 
-// Specialization for std::vector<int>
-template <>
-simdjson_inline simdjson_result<std::vector<int> > simdjson::ondemand::value::get() noexcept {
-  return get<std::vector<int>>();
-}
+template <typename T>
+simdjson_inline simdjson_result<T>
+simdjson::ondemand::document::get() & noexcept {
+  if constexpr (PushableContainer<T>) {
+    ondemand::array array;
+    auto error = get_array().get(array);
+    if (error) {
+      return error;
+    }
+    T container;
+    for (auto v : array) {
+      typename T::value_type val;
+      if constexpr (std::is_same_v<typename T::value_type, double>) {
+        error = v.get_double().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, bool>) {
+        error = v.get_bool().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, uint64_t>) {
+        error = v.get_uint64().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, int64_t>) {
+        error = v.get_int64().get(val);
+      } else if constexpr (std::is_same_v<typename T::value_type, int>) {
+        int64_t temp_val;
+        error = v.get_int64().get(temp_val);
+        if (!error) {
+          val = static_cast<int>(temp_val);
+        }
+      } else if constexpr (std::is_same_v<typename T::value_type, std::string>) {
+        std::string str_val;
+        error = v.get_string(str_val);
+        if (!error) {
+          val = std::move(str_val);
+        }
+      } else if constexpr (std::is_same_v<typename T::value_type,
+                                          std::string_view>) {
+        std::string_view str_view_val;
+        error = v.get_string(str_view_val, false);
+        if (!error) {
+          val = str_view_val;
+        }
+      } else if constexpr (std::is_same_v<typename T::value_type,
+                                          simdjson::ondemand::raw_json_string>) {
+        simdjson::ondemand::raw_json_string raw_val;
+        error = v.get_raw_json_string().get(raw_val);
+        if (!error) {
+          val = raw_val;
+        }
+      } else {
+        static_assert(!sizeof(T), "Unsupported value type in the container.");
+      }
 
-// Specialization for std::vector<std::string>
-template <>
-simdjson_inline simdjson_result<std::vector<std::string> > simdjson::ondemand::value::get() noexcept {
-  return get<std::vector<std::string>>();
+      if (error) {
+        return error;
+      }
+      container.push_back(std::move(val));
+    }
+    return container;
+  } else {
+    static_assert(!sizeof(T), "Unsupported container type.");
+  }
 }
 
 template <>
@@ -216,7 +220,7 @@ simdjson::ondemand::document::get() & noexcept {
         return error;
       }
     } else if (key == "values") {
-       error = field.value().get<std::vector<int>>().get(s.values);
+      error = field.value().get<std::vector<int>>().get(s.values);
       if (error) {
         return error;
       }
@@ -376,8 +380,20 @@ simdjson::ondemand::document::get() & noexcept {
   return x;
 }
 
+void demo() {
+  std::vector<std::string> vec;
+  std::string json_str = R"(["a", "b", "c"])";
+  ondemand::parser parser;
+  ondemand::document doc = parser.iterate(json_str);
+  std::vector<std::string> result = doc.get<std::vector<std::string>>();
+  for (auto x : result) {
+    std::cout << x << std::endl;
+  }
+}
 
 int main() {
+  demo();
+
   std::string json_str = R"({"id": 1, "name": "example", "values": [1, 2, 3]})";
   ondemand::parser parser;
   ondemand::document doc = parser.iterate(json_str);
@@ -387,7 +403,6 @@ int main() {
   simdjson::json_builder::fast_to_json_string(sb, my_struct);
   std::cout << sb.c_str() << std::endl;
 
-  /*
   std::string json_str_nested =
       R"({"a":1,"b":10,"c":0,"d":"test string\n\r\"","e":[1,2,3],"f":["ab","cd","fg"],"y":{"g":100,"h":"test string\n\r\"","i":[1,2,3]}})";
   doc = parser.iterate(json_str_nested);
@@ -395,7 +410,7 @@ int main() {
   X s1 = X(doc);
   simdjson::json_builder::StringBuilder sb2;
   simdjson::json_builder::fast_to_json_string(sb2, s1);
-  std::cout << sb2.c_str() << std::endl;*/
+  std::cout << sb2.c_str() << std::endl;
 
   return 0;
 }
