@@ -1,10 +1,24 @@
 #include "simdjson.h"
+#include "simdjson/json_builder/json_builder.h"
 #include <string>
 #include <vector>
 #include <iostream>
 #include <type_traits>
 
 using namespace simdjson;
+
+// Example user-defined type
+struct MyStruct {
+  int id;
+  std::string name;
+  std::vector<int> values;
+};
+
+// Example of simple user-defined type
+struct MySimpleStruct {
+  int id;
+  std::string name;
+};
 
 namespace simdjson {
 
@@ -16,7 +30,7 @@ concept PushableContainer =
     !std::is_same_v<T, std::string_view> && 
     !std::is_same_v<T, const char*>;
 
-// Specialize tag_invoke for std::vector<int>
+// Specialize tag_invoke for containers
 template <typename T>
   requires PushableContainer<T>
 simdjson_result<T>
@@ -52,11 +66,49 @@ tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
   }
 
   return vec;
+} 
+
+template <typename T>
+  requires json_builder::UserDefinedType<T>
+simdjson_result<T>
+tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
+  ondemand::object obj;
+  auto error = val.get_object().get(obj);
+  if (error) {
+    return error;
+  }
+  T t;
+  [:json_builder::expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto mem> {
+    auto it = obj[to_string_view(std::meta::identifier_of(mem))];
+    using MemberType = typename std::remove_reference_t<decltype(t.[:mem:])>;
+
+    if constexpr (std::is_same_v<MemberType, int>) {
+      auto int_result = it.get_int64();
+      if (int_result.error()) throw std::runtime_error("Error getting int64");
+      t.[:mem:] = static_cast<int>(int_result.value());
+    } else if constexpr (std::is_same_v<MemberType, double>) {
+      auto double_result = it.get_double();
+      if (double_result.error()) throw std::runtime_error("Error getting double");
+      t.[:mem:] = double_result.value();
+    } else if constexpr (std::is_same_v<MemberType, std::string>) {
+      auto string_result = it.get_string();
+      if (string_result.error()) throw std::runtime_error("Error getting string");
+      t.[:mem:] = std::string(string_result.value());
+    } else if constexpr (std::is_same_v<MemberType, bool>) {
+      auto bool_result = it.get_bool();
+      if (bool_result.error()) throw std::runtime_error("Error getting bool");
+      t.[:mem:] = bool_result.value();
+    } else {
+      t.[:mem:] = it.template get<MemberType>().value();
+    }
+  };
+  return t;
 }
 
-} // namespace simdjson
+} // simdjson
 
 int main() {
+  // Test for std::vector<int>
   std::string json_str = R"({"values": [1, 2, 3]})";
   ondemand::parser parser;
   auto doc = parser.iterate(json_str);
@@ -67,10 +119,27 @@ int main() {
     return 1;
   }
 
-  std::vector<int> my_struct = result.value();
-  for (const int &x : my_struct) {
+  std::vector<int> z = result.value();
+  for (const int &x : z) {
     std::cout << x << std::endl;
   }
 
+  // Test for user-defined type MyStruct
+  std::string json_str3 = R"({"id": 1, "name": "example", "values": [1, 2, 3]})";
+  ondemand::parser parser3;
+  auto doc3 = parser3.iterate(json_str3);
+
+  auto result3 = doc3.get<MyStruct>();
+  if (result3.error()) {
+    std::cerr << "Error parsing JSON: " << result3.error() << std::endl;
+    return 1;
+  }
+
+  MyStruct my_struct = result3.value();
+  std::cout << "ID: " << my_struct.id << ", Name: " << my_struct.name << ", Values: ";
+  for (const int &x : my_struct.values) {
+    std::cout << x << " ";
+  }
+  std::cout << std::endl;
   return 0;
 }
