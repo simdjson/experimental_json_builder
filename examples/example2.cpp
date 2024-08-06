@@ -1,3 +1,6 @@
+// Note: this code is not yet working and it is temporarily removed from the cmake build
+// For this to work, further changes might be needed to simdjson project. For now reflection and invoke_tag only work for ondemand::value::get()
+
 #include "simdjson.h"
 #include "simdjson/json_builder/json_builder.h"
 #include "simdjson/json_builder/string_builder.h"
@@ -31,354 +34,88 @@ struct X {
   Y y;
 };
 
+namespace simdjson {
+
 template <typename T>
 concept PushableContainer =
-    requires(T a, typename T::value_type val) { a.push_back(val); } &&
-    !std::is_same_v<T, std::string> && !std::is_same_v<T, std::string_view> &&
-    !std::is_same_v<T, const char *>;
+    requires(T a, typename T::value_type val) {
+      a.push_back(val);
+    } && !std::is_same_v<T, std::string> &&
+    !std::is_same_v<T, std::string_view> && 
+    !std::is_same_v<T, const char*>;
 
-template <class T>
-simdjson_inline simdjson_result<T> simdjson::ondemand::value::get() noexcept {
-  ondemand::array array;
-  auto error = get_array().get(array);
-  if (error) {
-    return error;
-  }
-  T container;
-  for (auto v : array) {
-    typename T::value_type val;
-    if constexpr (std::is_same_v<typename T::value_type, double>) {
-      error = v.get_double().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, bool>) {
-      error = v.get_bool().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, uint64_t>) {
-      error = v.get_uint64().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, int64_t>) {
-      error = v.get_int64().get(val);
-    } else if constexpr (std::is_same_v<typename T::value_type, int>) {
-      int64_t temp_val;
-      error = v.get_int64().get(temp_val);
-      if (!error) {
-        val = static_cast<int>(temp_val);
-      }
-    } else if constexpr (std::is_same_v<typename T::value_type, std::string>) {
-      std::string str_val;
-      error = v.get_string(str_val);
-      if (!error) {
-        val = std::move(str_val);
-      }
-    } else if constexpr (std::is_same_v<typename T::value_type,
-                                        std::string_view>) {
-      std::string_view str_view_val;
-      error = v.get_string(str_view_val, false);
-      if (!error) {
-        val = str_view_val;
-      }
-    } else if constexpr (std::is_same_v<typename T::value_type,
-                                        simdjson::ondemand::raw_json_string>) {
-      simdjson::ondemand::raw_json_string raw_val;
-      error = v.get_raw_json_string().get(raw_val);
-      if (!error) {
-        val = raw_val;
-      }
-    } else {
-      static_assert(!sizeof(T), "Unsupported value type in the container.");
-    }
-
-    if (error) {
-      return error;
-    }
-    container.push_back(std::move(val));
-  }
-  return container;
-}
-
+// Specialize tag_invoke for containers
 template <typename T>
-simdjson_inline simdjson_result<T>
-simdjson::ondemand::document::get() & noexcept {
-  if constexpr (PushableContainer<T>) {
-    ondemand::array array;
-    auto error = get_array().get(array);
-    if (error) {
-      return error;
-    }
-    T container;
-    for (auto v : array) {
-      typename T::value_type val;
-      if constexpr (std::is_same_v<typename T::value_type, double>) {
-        error = v.get_double().get(val);
-      } else if constexpr (std::is_same_v<typename T::value_type, bool>) {
-        error = v.get_bool().get(val);
-      } else if constexpr (std::is_same_v<typename T::value_type, uint64_t>) {
-        error = v.get_uint64().get(val);
-      } else if constexpr (std::is_same_v<typename T::value_type, int64_t>) {
-        error = v.get_int64().get(val);
-      } else if constexpr (std::is_same_v<typename T::value_type, int>) {
-        int64_t temp_val;
-        error = v.get_int64().get(temp_val);
-        if (!error) {
-          val = static_cast<int>(temp_val);
-        }
-      } else if constexpr (std::is_same_v<typename T::value_type, std::string>) {
-        std::string str_val;
-        error = v.get_string(str_val);
-        if (!error) {
-          val = std::move(str_val);
-        }
-      } else if constexpr (std::is_same_v<typename T::value_type,
-                                          std::string_view>) {
-        std::string_view str_view_val;
-        error = v.get_string(str_view_val, false);
-        if (!error) {
-          val = str_view_val;
-        }
-      } else if constexpr (std::is_same_v<typename T::value_type,
-                                          simdjson::ondemand::raw_json_string>) {
-        simdjson::ondemand::raw_json_string raw_val;
-        error = v.get_raw_json_string().get(raw_val);
-        if (!error) {
-          val = raw_val;
-        }
-      } else {
-        static_assert(!sizeof(T), "Unsupported value type in the container.");
-      }
+  requires PushableContainer<T>
+simdjson_result<T>
+tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
+  T vec;
+  auto array_result = val.get_array();
+  if (array_result.error()) return array_result.error();
+  ondemand::array array = array_result.value();
 
-      if (error) {
-        return error;
-      }
-      container.push_back(std::move(val));
+  for (auto v : array) {
+    typename T::value_type element;
+    if constexpr (std::is_same_v<typename T::value_type, int>) {
+      auto int_result = v.get_int64();
+      if (int_result.error()) return int_result.error();
+      element = static_cast<int>(int_result.value());
+    } else if constexpr (std::is_same_v<typename T::value_type, double>) {
+      auto double_result = v.get_double();
+      if (double_result.error()) return double_result.error();
+      element = double_result.value();
+    } else if constexpr (std::is_same_v<typename T::value_type, std::string>) {
+      auto string_result = v.get_string();
+      if (string_result.error()) return string_result.error();
+      element = std::string(string_result.value());
+    } else if constexpr (std::is_same_v<typename T::value_type, bool>) {
+      auto bool_result = v.get_bool();
+      if (bool_result.error()) return bool_result.error();
+      element = bool_result.value();
+    } else {
+      // Unsupported type
+      static_assert(!std::is_same_v<T, T>, "Unsupported type in JSON array");
     }
-    return container;
-  } else {
-    static_assert(!sizeof(T), "Unsupported container type.");
+    vec.push_back(std::move(element));
   }
-}
 
-template <>
-simdjson_inline simdjson_result<MyStruct>
-simdjson::ondemand::value::get() noexcept {
+  return vec;
+} 
+
+
+///
+/// For simplicity, the definitions of invoke should be non-overlapping.
+/// If we provide both a specialization for a container and a specialization for a user-defined type,
+/// which one gets picked is maybe unclear???
+/// 
+template <typename T>
+  requires (json_builder::UserDefinedType<T> && ! PushableContainer<T>)
+simdjson_result<T>
+tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
   ondemand::object obj;
-  auto error = get_object().get(obj);
+  auto error = val.get_object().get(obj);
   if (error) {
     return error;
   }
-  MyStruct s;
-  for (auto field : obj) {
-    raw_json_string key;
-    error = field.key().get(key);
-    if (error) {
-      return error;
+  T t;
+  [:json_builder::expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto mem> {
+    auto it = obj[(std::string_view)std::meta::identifier_of(mem)];
+    using MemberType = typename std::remove_reference_t<decltype(t.[:mem:])>;
+
+    if constexpr (std::is_same_v<MemberType, int>) {
+      int64_t val;
+      if(auto err = it.get(val); err) { return err; }
+      t.[:mem:] = static_cast<int>(val);
+    } else if constexpr (std::is_same_v<MemberType, std::string>) {
+      if(auto err = it.get_string(t.[:mem:]); err) { return err; }
+    } else {
+      if(auto err = it.get(t.[:mem:]); err) { return err; }
     }
-    if (key == "id") {
-      int64_t id;
-      error = field.value().get_int64().get(id);
-      if (error) {
-        return error;
-      }
-      s.id = int(id);
-    } else if (key == "name") {
-      error = field.value().get_string(s.name);
-      if (error) {
-        return error;
-      }
-    } else if (key == "values") {
-      error = field.value().get<std::vector<int>>().get(s.values);
-      if (error) {
-        return error;
-      }
-    }
-  }
-  return s;
+  };
+  return t;
 }
 
-// todo: use reflection to generate
-template <>
-simdjson_inline simdjson_result<MyStruct>
-simdjson::ondemand::document::get() & noexcept {
-  ondemand::object obj;
-  auto error = get_object().get(obj);
-  if (error) {
-    return error;
-  }
-  MyStruct s;
-  for (auto field : obj) {
-    raw_json_string key;
-    error = field.key().get(key);
-    if (error) {
-      return error;
-    }
-    if (key == "id") {
-      int64_t id;
-      error = field.value().get_int64().get(id);
-      if (error) {
-        return error;
-      }
-      s.id = int(id);
-    } else if (key == "name") {
-      error = field.value().get_string(s.name);
-      if (error) {
-        return error;
-      }
-    } else if (key == "values") {
-      error = field.value().get<std::vector<int>>().get(s.values);
-      if (error) {
-        return error;
-      }
-    }
-  }
-  return s;
-}
-
-// todo: use reflection to generate
-template <>
-simdjson_inline simdjson_result<Y> simdjson::ondemand::value::get() noexcept {
-  ondemand::object obj;
-  auto error = get_object().get(obj);
-  Y y;
-  for (auto field : obj) {
-    raw_json_string key;
-    error = field.key().get(key);
-    if (error) {
-      return error;
-    }
-    if (key == "g") {
-      int64_t g;
-      error = field.value().get_int64().get(g);
-      if (error) {
-        return error;
-      }
-      y.g = int(g);
-    } else if (key == "h") {
-      error = field.value().get_string(y.h);
-      if (error) {
-        return error;
-      }
-    } else if (key == "i") {
-      error = field.value().get<std::vector<int>>().get(y.i);
-      if (error) {
-        return error;
-      }
-    }
-  }
-  return y;
-}
-
-// todo: use reflection to generate
-template <>
-simdjson_inline simdjson_result<X> simdjson::ondemand::value::get() noexcept {
-  ondemand::object obj;
-  auto error = get_object().get(obj);
-  X x;
-  for (auto field : obj) {
-    raw_json_string key;
-    error = field.key().get(key);
-    if (error) {
-      return error;
-    }
-    if (key == "a") {
-      int64_t a;
-      error = field.value().get_int64().get(a);
-      if (error) {
-        return error;
-      }
-      x.a = char(a);
-    } else if (key == "b") {
-      int64_t b;
-      error = field.value().get_int64().get(b);
-      if (error) {
-        return error;
-      }
-      x.b = int(b);
-    } else if (key == "c") {
-      int64_t c;
-      error = field.value().get_int64().get(c);
-      if (error) {
-        return error;
-      }
-      x.c = int(c);
-    } else if (key == "d") {
-      error = field.value().get_string(x.d);
-      if (error) {
-        return error;
-      }
-    } else if (key == "e") {
-      error = field.value().get<std::vector<int>>().get(x.e);
-      if (error) {
-        return error;
-      }
-    } else if (key == "f") {
-      error = field.value().get<std::vector<std::string>>().get(x.f);
-      if (error) {
-        return error;
-      }
-    } else if (key == "y") {
-      // error = field.value().get<Y>().get(x.y);
-      if (error) {
-        return error;
-      }
-    }
-  }
-  return x;
-}
-
-// todo: use reflection to generate
-template <>
-simdjson_inline simdjson_result<X>
-simdjson::ondemand::document::get() & noexcept {
-  ondemand::object obj;
-  auto error = get_object().get(obj);
-  X x;
-  for (auto field : obj) {
-    raw_json_string key;
-    error = field.key().get(key);
-    if (error) {
-      return error;
-    }
-    if (key == "a") {
-      int64_t a;
-      error = field.value().get_int64().get(a);
-      if (error) {
-        return error;
-      }
-      x.a = char(a);
-    } else if (key == "b") {
-      int64_t b;
-      error = field.value().get_int64().get(b);
-      if (error) {
-        return error;
-      }
-      x.b = int(b);
-    } else if (key == "c") {
-      int64_t c;
-      error = field.value().get_int64().get(c);
-      if (error) {
-        return error;
-      }
-      x.c = int(c);
-    } else if (key == "d") {
-      error = field.value().get_string(x.d);
-      if (error) {
-        return error;
-      }
-    } else if (key == "e") {
-      error = field.value().get<std::vector<int>>().get(x.e);
-      if (error) {
-        return error;
-      }
-    } else if (key == "f") {
-      error = field.value().get<std::vector<std::string>>().get(x.f);
-      if (error) {
-        return error;
-      }
-    } else if (key == "y") {
-      // error = field.value().get<Y>().get(x.y);
-      if (error) {
-        return error;
-      }
-    }
-  }
-  return x;
-}
+} // simdjson
 
 void demo() {
   std::vector<std::string> vec;
