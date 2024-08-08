@@ -48,7 +48,7 @@ concept PushableContainer =
 template <typename T>
   requires PushableContainer<T>
 simdjson_result<T>
-tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
+tag_invoke(deserialize_tag, std::type_identity<T>, auto &val) {
   T vec;
   auto array_result = val.get_array();
   if (array_result.error()) return array_result.error();
@@ -91,7 +91,7 @@ tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
 template <typename T>
   requires (json_builder::UserDefinedType<T> && ! PushableContainer<T>)
 simdjson_result<T>
-tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
+tag_invoke(deserialize_tag, std::type_identity<T>, auto &val) {
   ondemand::object obj;
   auto error = val.get_object().get(obj);
   if (error) {
@@ -136,7 +136,11 @@ int main() {
   ondemand::document doc = parser.iterate(json_str);
 
   MyStruct my_struct(doc);
-  simdjson::json_builder::StringBuilder sb;
+  std::cout << my_struct.id << std::endl;
+  std::cout << my_struct.name << std::endl;
+  std::cout << my_struct.values.size() << std::endl;
+
+  /* simdjson::json_builder::StringBuilder sb;
   simdjson::json_builder::fast_to_json_string(sb, my_struct);
   std::cout << sb.c_str() << std::endl;
 
@@ -147,7 +151,7 @@ int main() {
   X s1 = X(doc);
   simdjson::json_builder::StringBuilder sb2;
   simdjson::json_builder::fast_to_json_string(sb2, s1);
-  std::cout << sb2.c_str() << std::endl;
+  std::cout << sb2.c_str() << std::endl;*/
 
   return 0;
 }

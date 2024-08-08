@@ -35,7 +35,7 @@ concept PushableContainer =
 template <typename T>
   requires PushableContainer<T>
 simdjson_result<T>
-tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
+tag_invoke(deserialize_tag, std::type_identity<T>, auto &val) {
   T vec;
   auto array_result = val.get_array();
   if (array_result.error()) return array_result.error();
@@ -78,7 +78,7 @@ tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
 template <typename T>
   requires (json_builder::UserDefinedType<T> && ! PushableContainer<T>)
 simdjson_result<T>
-tag_invoke(deserialize_tag, std::type_identity<T>, ondemand::value &val) {
+tag_invoke(deserialize_tag, std::type_identity<T>, auto &val) {
   ondemand::object obj;
   auto error = val.get_object().get(obj);
   if (error) {

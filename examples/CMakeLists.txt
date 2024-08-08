@@ -4,8 +4,8 @@ add_compile_options(-Wall -Wextra -Weffc++ -Wsign-compare -Wshadow -Wwrite-strin
 add_executable(example example.cpp)
 target_link_libraries(example PRIVATE simdjson::serialization simdjson::simdjson)
 
-#add_executable(example2 example2.cpp)
-#target_link_libraries(example2 PRIVATE simdjson::serialization simdjson::simdjson)
+add_executable(example2 example2.cpp)
+target_link_libraries(example2 PRIVATE simdjson::serialization simdjson::simdjson)
 
 add_executable(example3 example3.cpp)
 target_link_libraries(example3 PRIVATE simdjson::serialization simdjson::simdjson)

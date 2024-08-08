@@ -53,7 +53,7 @@ include(cmake/CPM.cmake)
 CPMAddPackage(
   NAME simdjson
   GITHUB_REPOSITORY the-moisrex/simdjson-custom-types
-  GIT_TAG master
+  GIT_TAG builder_development_branch
 ) # include simdjson
 
 add_subdirectory(examples)
