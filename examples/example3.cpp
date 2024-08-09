@@ -1,37 +1,24 @@
-// Note: this code is not yet working and it is temporarily removed from the cmake build
-// For this to work, further changes might be needed to simdjson project. For now reflection and invoke_tag only work for ondemand::value::get()
-
 #include "simdjson.h"
 #include "simdjson/json_builder/json_builder.h"
-#include "simdjson/json_builder/string_builder.h"
-#include <format>
-#include <iostream>
-#include <print>
+#include <cstdlib>
 #include <string>
-#include <type_traits>
 #include <vector>
+#include <iostream>
+#include <type_traits>
+
 using namespace simdjson;
 
+// Example user-defined type
 struct MyStruct {
   int id;
   std::string name;
   std::vector<int> values;
 };
 
-struct Y {
-  int g;
-  std::string h;
-  std::vector<int> i;
-};
-
-struct X {
-  char a;
-  int b;
-  int c;
-  std::string d;
-  std::vector<int> e;
-  std::vector<std::string> f;
-  Y y;
+// Example of simple user-defined type
+struct MySimpleStruct {
+  int id;
+  std::string name;
 };
 
 namespace simdjson {
@@ -117,41 +104,38 @@ tag_invoke(deserialize_tag, std::type_identity<T>, auto &val) {
 
 } // simdjson
 
-void demo() {
-  std::vector<std::string> vec;
-  std::string json_str = R"(["a", "b", "c"])";
+int main() {
+  // Test for std::vector<int>
+  std::string json_str = R"({"values": [1, 2, 3]})";
   ondemand::parser parser;
-  ondemand::document doc = parser.iterate(json_str);
-  std::vector<std::string> result = doc.get<std::vector<std::string>>();
-  for (auto x : result) {
+  auto doc = parser.iterate(json_str);
+  std::vector<int> result;
+  if(auto err = doc["values"].get<std::vector<int>>().get(result); err) {
+    std::cerr << "Error parsing JSON: " << simdjson::error_message(err) << std::endl;
+    return EXIT_FAILURE;
+  }
+  for (const int x : result) {
     std::cout << x << std::endl;
   }
-}
 
-int main() {
-  demo();
+  /////////////
+  /// Notice how we won't parse directly the *document* but a value inside the document.
+  /// That's because the document is not an instance of a value in simdjson, and so the
+  /// current patch would require a bit of extra work to make it work with both values
+  /// and documents
+  //////////////
+  std::string json_str3 = R"({"toto":{"id": 1, "name": "example", "values": [4, 42, 43]}})";
+  ondemand::parser parser3;
+  auto doc3 = parser3.iterate(json_str3);
 
-  std::string json_str = R"({"id": 1, "name": "example", "values": [1, 2, 3]})";
-  ondemand::parser parser;
-  ondemand::document doc = parser.iterate(json_str);
-
-  MyStruct my_struct(doc);
-  std::cout << my_struct.id << std::endl;
-  std::cout << my_struct.name << std::endl;
-  std::cout << my_struct.values.size() << std::endl;
-
-  /* simdjson::json_builder::StringBuilder sb;
-  simdjson::json_builder::fast_to_json_string(sb, my_struct);
-  std::cout << sb.c_str() << std::endl;
-
-  std::string json_str_nested =
-      R"({"a":1,"b":10,"c":0,"d":"test string\n\r\"","e":[1,2,3],"f":["ab","cd","fg"],"y":{"g":100,"h":"test string\n\r\"","i":[1,2,3]}})";
-  doc = parser.iterate(json_str_nested);
-
-  X s1 = X(doc);
-  simdjson::json_builder::StringBuilder sb2;
-  simdjson::json_builder::fast_to_json_string(sb2, s1);
-  std::cout << sb2.c_str() << std::endl;*/
-
-  return 0;
+  MyStruct result3;
+  if(auto err = doc3["toto"].get(result3); err) {
+    std::cerr << "Error parsing JSON: " << simdjson::error_message(err) << std::endl;
+    return EXIT_FAILURE;
+  }
+  std::cout << "ID: " << result3.id << ", Name: " << result3.name ;
+  for (const int x : result3.values) {
+    std::cout << x << std::endl;
+  }
+  return EXIT_SUCCESS;
 }
