@@ -55,6 +55,24 @@ template <class T> void bench_fast_with_alloc(T &data) {
                }));
 }
 
+
+template <class T> void bench_fast_with_assign(T &data) {
+  std::string json;
+  simdjson::json_builder::to_json(data, json);
+  size_t output_volume = json.size();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(sizeof(data), output_volume, "bench_fast_with_assign",
+               bench([&data, &measured_volume, &output_volume, &json]() {
+                 simdjson::json_builder::to_json(data, json);
+                 measured_volume = json.size();
+                 if (measured_volume != output_volume) {
+                   printf("mismatch\n");
+                 }
+               }));
+}
+
 void bench_nlohmann(TwitterData &data) {
   std::string output = nlohmann_serialize(data);
   size_t output_volume = output.size();
@@ -190,9 +208,10 @@ int main() {
   auto json_value = parser.parse();
   TwitterData my_struct;
   bench_nlohmann(my_struct);
-  //simpleparser::json_builder::from_json(json_value, my_struct);
+  simpleparser::json_builder::from_json(json_value, my_struct);
   bench_fast_simpler(my_struct);
   bench_fast_with_alloc(my_struct);
+  bench_fast_with_assign(my_struct);
 #if SIMDJSON_BENCH_CPP_REFLECT
   bench_reflect_cpp(my_struct);
 #endif
