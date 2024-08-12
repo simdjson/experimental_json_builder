@@ -66,7 +66,7 @@ int main() {
 }
 ```
 
-We can make the following example work at compile time:
+We can make the following example work at compile time (see examples/demo.cpp):
 ```cpp
 struct kid {
   int age;
