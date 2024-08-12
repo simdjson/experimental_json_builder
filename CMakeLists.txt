@@ -52,7 +52,7 @@ target_include_directories(
 include(cmake/CPM.cmake)
 CPMAddPackage(
   NAME simdjson
-  GITHUB_REPOSITORY the-moisrex/simdjson-custom-types
+  GITHUB_REPOSITORY simdjson/simdjson
   GIT_TAG builder_development_branch
 ) # include simdjson
 

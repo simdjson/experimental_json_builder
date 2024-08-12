@@ -163,8 +163,7 @@ void bench_custom(std::vector<User> &data) {
 }
 
 template <class T> void bench_fast_simpler(std::vector<T> &data) {
-  simdjson::json_builder::StringBuilder b(32 * 1024 *
-                                          1024); // pre-allocate 32 MB
+  simdjson::json_builder::string_builder b;
   simdjson::json_builder::fast_to_json_string(b, data);
   size_t output_volume = b.size();
   b.reset();
@@ -176,6 +175,23 @@ template <class T> void bench_fast_simpler(std::vector<T> &data) {
                  b.reset();
                  simdjson::json_builder::fast_to_json_string(b, data);
                  measured_volume = b.size();
+                 if (measured_volume != output_volume) {
+                   printf("mismatch\n");
+                 }
+               }));
+}
+
+
+template <class T> void bench_fast_with_alloc(std::vector<T> &data) {
+  std::string json = simdjson::json_builder::to_json_string(data);
+  size_t output_volume = json.size();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(data.size(), output_volume, "bench_fast_with_alloc",
+               bench([&data, &measured_volume, &output_volume]() {
+                 std::string json = simdjson::json_builder::to_json_string(data);
+                 measured_volume = json.size();
                  if (measured_volume != output_volume) {
                    printf("mismatch\n");
                  }
@@ -206,8 +222,9 @@ int main() {
 
   std::vector<std::vector<User>> in_array = {test_data};
   bench_nlohmann(test_data);
-  bench_custom(test_data);
+  //bench_custom(test_data);
   bench_fast_simpler(test_data);
+  bench_fast_with_alloc(test_data);
 #if SIMDJSON_BENCH_CPP_REFLECT
   bench_reflect_cpp(test_data);
 #endif

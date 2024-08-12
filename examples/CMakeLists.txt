@@ -1,6 +1,9 @@
 add_compile_options(-Wall -Wextra -Weffc++ -Wsign-compare -Wshadow -Wwrite-strings
 -Wpointer-arith -Winit-self -Wconversion -Wno-sign-conversion)
 
+add_executable(demo demo.cpp)
+target_link_libraries(demo PRIVATE simdjson::serialization simdjson::simdjson)
+
 add_executable(example example.cpp)
 target_link_libraries(example PRIVATE simdjson::serialization simdjson::simdjson)
 

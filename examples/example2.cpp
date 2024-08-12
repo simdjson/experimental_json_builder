@@ -139,19 +139,5 @@ int main() {
   std::cout << my_struct.id << std::endl;
   std::cout << my_struct.name << std::endl;
   std::cout << my_struct.values.size() << std::endl;
-
-  /* simdjson::json_builder::StringBuilder sb;
-  simdjson::json_builder::fast_to_json_string(sb, my_struct);
-  std::cout << sb.c_str() << std::endl;
-
-  std::string json_str_nested =
-      R"({"a":1,"b":10,"c":0,"d":"test string\n\r\"","e":[1,2,3],"f":["ab","cd","fg"],"y":{"g":100,"h":"test string\n\r\"","i":[1,2,3]}})";
-  doc = parser.iterate(json_str_nested);
-
-  X s1 = X(doc);
-  simdjson::json_builder::StringBuilder sb2;
-  simdjson::json_builder::fast_to_json_string(sb2, s1);
-  std::cout << sb2.c_str() << std::endl;*/
-
   return 0;
 }
