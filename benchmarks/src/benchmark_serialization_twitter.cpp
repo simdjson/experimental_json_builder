@@ -19,8 +19,7 @@
 #endif
 
 template <class T> void bench_fast_simpler(T &data) {
-  simdjson::json_builder::StringBuilder b(32 * 1024 *
-                                          1024); // pre-allocate 32 MB
+  simdjson::json_builder::string_builder b;
   simdjson::json_builder::fast_to_json_string(b, data);
   size_t output_volume = b.size();
   b.reset();
@@ -32,6 +31,24 @@ template <class T> void bench_fast_simpler(T &data) {
                  b.reset();
                  simdjson::json_builder::fast_to_json_string(b, data);
                  measured_volume = b.size();
+                 if (measured_volume != output_volume) {
+                   printf("mismatch\n");
+                 }
+               }));
+}
+
+
+template <class T> void bench_fast_with_alloc(T &data) {
+  std::string json = simdjson::json_builder::to_json_string(data);
+  size_t output_volume = json.size();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(sizeof(data), output_volume, "bench_fast_with_alloc",
+               bench([&data, &measured_volume, &output_volume]() {
+                 std::string json = simdjson::json_builder::to_json_string(data);
+
+                 measured_volume = json.size();
                  if (measured_volume != output_volume) {
                    printf("mismatch\n");
                  }
@@ -143,8 +160,7 @@ void test_correctness(std::string_view json_str) {
   // Now let's do a round-trip
 
   // Serializing the simd_struct back to a string
-  simdjson::json_builder::StringBuilder b(32 * 1024 *
-                                          1024); // pre-allocate 32 MB
+  simdjson::json_builder::string_builder b;
   simdjson::json_builder::fast_to_json_string(b, simd_struct);
   std::string simd_struct_to_json = std::string(b.view());
 
@@ -173,9 +189,10 @@ int main() {
   simpleparser::json_parser::JsonParser parser(json_str);
   auto json_value = parser.parse();
   TwitterData my_struct;
-  simpleparser::json_builder::from_json(json_value, my_struct);
-  bench_fast_simpler(my_struct);
   bench_nlohmann(my_struct);
+  //simpleparser::json_builder::from_json(json_value, my_struct);
+  bench_fast_simpler(my_struct);
+  bench_fast_with_alloc(my_struct);
 #if SIMDJSON_BENCH_CPP_REFLECT
   bench_reflect_cpp(my_struct);
 #endif

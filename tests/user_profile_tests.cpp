@@ -150,7 +150,7 @@ User generate_random_user() {
 }
 
 std::string simdjson_serialize(const User &user) {
-  simdjson::json_builder::StringBuilder b;
+  simdjson::json_builder::string_builder b;
   simdjson::json_builder::fast_to_json_string(b, user);
   return std::string(b.view());
 }

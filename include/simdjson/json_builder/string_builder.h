@@ -13,10 +13,9 @@ namespace json_builder {
 template <typename T>
 concept arithmetic = std::is_arithmetic_v<T>;
 
-class StringBuilder final {
+class string_builder final {
 public:
-  // By default, we allocate 1 MB.
-  StringBuilder(size_t initial_capacity = 1048576)
+  string_builder(size_t initial_capacity = 1024)
       : buffer(new char[initial_capacity]), position(0),
         capacity(initial_capacity) {}
 
@@ -84,6 +83,10 @@ public:
     std::memcpy(buffer.get() + position, str, len);
     position += len;
   }
+
+  operator std::string() const { return std::string(view()); }
+
+  operator std::string_view() const { return view(); }
 
   std::string_view view() const {
     return std::string_view(buffer.get(), position);

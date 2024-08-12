@@ -54,7 +54,7 @@ template <typename R> consteval auto expand(R range) {
 
 template <class T>
   requires(ContainerButNotString<T>)
-constexpr void atom(StringBuilder &b, const T &t) {
+constexpr void atom(string_builder &b, const T &t) {
   if (t.size() == 0) {
     b.append_unescaped("[]");
     return;
@@ -72,11 +72,11 @@ template <class T>
   requires(std::is_same_v<T, std::string> ||
            std::is_same_v<T, std::string_view> ||
            std::is_same_v<T, const char *>)
-constexpr void atom(StringBuilder &b, const T &t) {
+constexpr void atom(string_builder &b, const T &t) {
   b.append(t);
 }
 
-template <arithmetic T> constexpr void atom(StringBuilder &b, const T t) {
+template <arithmetic T> constexpr void atom(string_builder &b, const T t) {
   b.append(t);
 }
 
@@ -85,7 +85,7 @@ template <class T>
            !std::is_same_v<T, std::string> &&
            !std::is_same_v<T, std::string_view> &&
            !std::is_same_v<T, const char *>)
-constexpr void atom(StringBuilder &b, const T &t) {
+constexpr void atom(string_builder &b, const T &t) {
   int i = 0;
   b.append('{');
   [:expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
@@ -103,7 +103,7 @@ constexpr void atom(StringBuilder &b, const T &t) {
 }
 
 // works for struct
-template <class Z> void fast_to_json_string(StringBuilder &b, const Z &z) {
+template <class Z> void fast_to_json_string(string_builder &b, const Z &z) {
   int i = 0;
   b.append('{');
   [:expand(std::meta::nonstatic_data_members_of(^Z)):] >> [&]<auto dm> {
@@ -123,7 +123,7 @@ template <class Z> void fast_to_json_string(StringBuilder &b, const Z &z) {
 // works for container
 template <class Z>
   requires(ContainerButNotString<Z>)
-void fast_to_json_string(StringBuilder &b, const Z &z) {
+void fast_to_json_string(string_builder &b, const Z &z) {
   if (z.size() == 0) {
     b.append_unescaped("[]");
     return;
@@ -135,6 +135,20 @@ void fast_to_json_string(StringBuilder &b, const Z &z) {
     atom(b, z[i]);
   }
   b.append(']');
+}
+
+template <class Z>
+std::string to_json_string(const Z &z) {
+  string_builder b;
+  fast_to_json_string(b, z);
+  return std::string(b);
+}
+
+template <class Z>
+void to_json(const Z &z, std::string &s) {
+  string_builder b;
+  fast_to_json_string(b, z);
+  s.assign(b.view());
 }
 
 } // namespace json_builder

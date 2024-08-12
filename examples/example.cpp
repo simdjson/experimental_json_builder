@@ -40,7 +40,7 @@ int main() {
                 .i = {1, 2, 3},
                 .z = {.x = 1000}}};
 
-  simdjson::json_builder::StringBuilder sb;
+  simdjson::json_builder::string_builder sb;
   simdjson::json_builder::fast_to_json_string(sb, s1);
   std::cout << sb.c_str() << std::endl;
   return EXIT_SUCCESS;
