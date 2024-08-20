@@ -209,12 +209,7 @@ cd ~/clang-source/build-llvm
 Configure the LLVM/Clang build with CMake:
 
 ```
-cmake -S ~/clang-source/llvm -B ~/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release \
-    -DLLVM_ENABLE_ASSERTIONS=ON \
-    -DLLVM_UNREACHABLE_OPTIMIZE=ON \\
-    -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
-    -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
-    -DLLVM_ENABLE_PROJECTS=clang -G Ninja
+ccmake -S ~/clang-source/llvm -B ~/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_UNREACHABLE_OPTIMIZE=ON -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DCLANG_DEFAULT_CXX_STDLIB=libc++ -DLLVM_ENABLE_PROJECTS=clang -G Ninja
 
 ```
 
