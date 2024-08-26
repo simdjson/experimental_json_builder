@@ -14,7 +14,11 @@ endif()
 add_executable(SerializationBenchmark benchmark_serialization.cpp)
 add_executable(SerializationTwitterBenchmark benchmark_serialization_twitter.cpp)
 
-
+ if(TARGET serde-benchmark)
+    message(STATUS "serde-benchmark target was created. Linking benchmarks and serde-benchmark.")
+    target_link_libraries(SerializationTwitterBenchmark PRIVATE serde-benchmark)
+    target_compile_definitions(SerializationTwitterBenchmark PRIVATE SIMDJSON_RUST_VERSION="${Rust_VERSION}")
+endif()
 target_link_libraries(SerializationTwitterBenchmark PRIVATE simpleparser simdjson::serialization nlohmann_json::nlohmann_json simdjson::simdjson)
 target_link_libraries(SerializationBenchmark PRIVATE simpleparser simdjson::serialization nlohmann_json::nlohmann_json simdjson::simdjson)
 

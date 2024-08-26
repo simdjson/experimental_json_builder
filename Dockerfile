@@ -24,7 +24,7 @@ FROM debian:12
 LABEL maintainer "LLVM Developers"
 # Install packages for minimal useful image.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential  ca-certificates libcurl4-openssl-dev cmake make wget python3 python3-dev sudo curl ninja-build vim git binutils && \
+    apt-get install -y --no-install-recommends build-essential  ca-certificates rust-all libcurl4-openssl-dev cmake make wget python3 python3-dev sudo curl ninja-build vim git binutils && \
     rm -rf /var/lib/apt/lists/*
 # Copy build results of stage 1 to /usr/local.
 COPY --from=builder /tmp/clang-install/ /usr/local/
