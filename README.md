@@ -5,7 +5,8 @@ That is, we see to build fast and convenient code to map your data structure to 
 
 Ultimately, this work might cover both serialization and deserialization.
 
-We've seen different proposals for C++ reflection, for now we will focus on the [latest p2996 paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r4.html) that is targeting C++26.
+We've seen different proposals for C++ reflection, for now we will focus on the [latest p2996 paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r5.html) that is targeting C++26.
+
 
 Table of Contents
 -----------------
@@ -57,7 +58,7 @@ Or use one of the Macros described
 
 By leveraging compile-time reflection, we can support for something as simple as:
 
-```c++
+```cpp
 int main() {
     X s1 = {.a = '1', .b = 10, .c = 0, .d = "test string\n\r\"", .e = {1, 2, 3}, .f = {"ab", "cd", "fg"}};
 
@@ -66,7 +67,31 @@ int main() {
 }
 ```
 
-As of now, we were able to implement this with ~1k lines of code (and that is including Neon + SSE2 optimizations in [json_escaping.hpp](src/json_escaping.hpp)).
+We can make the following example work at compile time (see examples/demo.cpp):
+```cpp
+struct kid {
+  int age;
+  std::string name;
+  std::vector<std::string> toys;
+};
+
+void demo() {
+  simdjson::padded_string json_str =
+      R"({"age": 12, "name": "John", "toys": ["car", "ball"]})"_padded;
+  simdjson::ondemand::parser parser;
+  auto doc = parser.iterate(json_str);
+  kid k = doc.get<kid>();
+  std::print("I am {} years old\n", k.age);
+  for (const auto &toy : k.toys) {
+    std::print("I have a {}\n", toy);
+  }
+  std::print("My name is {}\n", k.name);
+
+  std::print("My JSON is {}\n", simdjson::json_builder::to_json_string(k));
+}
+```
+
+
 
 The benchmark results show that our serialization speed can be 20/30x faster than [nlohmann](https://github.com/nlohmann/json).
 
@@ -184,12 +209,7 @@ cd ~/clang-source/build-llvm
 Configure the LLVM/Clang build with CMake:
 
 ```
-cmake -S ~/clang-source/llvm -B ~/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release \
-    -DLLVM_ENABLE_ASSERTIONS=ON \
-    -DLLVM_UNREACHABLE_OPTIMIZE=ON \\
-    -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
-    -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
-    -DLLVM_ENABLE_PROJECTS=clang -G Ninja
+ccmake -S ~/clang-source/llvm -B ~/clang-source/build-llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_UNREACHABLE_OPTIMIZE=ON -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DCLANG_DEFAULT_CXX_STDLIB=libc++ -DLLVM_ENABLE_PROJECTS=clang -G Ninja
 
 ```
 

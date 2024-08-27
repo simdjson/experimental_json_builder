@@ -8,8 +8,6 @@ project(experimental_json_builder
     LANGUAGES CXX
 )
 
-
-
 option(SIMDJSON_SERIALIZER_SANITIZE_MEMORY "Sanitize memory" OFF)
 
 if(SIMDJSON_SERIALIZER_SANITIZE_MEMORY)
@@ -52,9 +50,11 @@ target_include_directories(
 )
 
 include(cmake/CPM.cmake)
-# include simdjson
-CPMAddPackage("gh:simdjson/simdjson@3.9.4")
-
+CPMAddPackage(
+  NAME simdjson
+  GITHUB_REPOSITORY simdjson/simdjson
+  GIT_TAG builder_development_branch
+) # include simdjson
 
 add_subdirectory(examples)
 add_subdirectory(benchmarks)

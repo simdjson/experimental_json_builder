@@ -4,9 +4,26 @@
 #include <nlohmann/json.hpp>
 #include <simdjson.h>
 
+#include <concepts>
 #include <iostream>
 #include <random>
 #include <vector>
+
+template <auto... Xs, typename F> constexpr void for_values(F &&f) {
+  (f.template operator()<Xs>(), ...);
+}
+
+template <auto B, auto E, typename F> constexpr void for_range(F &&f) {
+  using t = std::common_type_t<decltype(B), decltype(E)>;
+
+  [&f]<auto... Xs>(std::integer_sequence<t, Xs...>) {
+    for_values<(B + Xs)...>(f);
+  }(std::make_integer_sequence<t, E - B>{});
+}
+
+template <typename T> consteval auto member_info(int n) {
+  return nonstatic_data_members_of(^T)[n];
+}
 
 std::mt19937 rng(12345);
 struct Location {
@@ -150,7 +167,7 @@ User generate_random_user() {
 }
 
 std::string simdjson_serialize(const User &user) {
-  simdjson::json_builder::StringBuilder b;
+  simdjson::json_builder::string_builder b;
   simdjson::json_builder::fast_to_json_string(b, user);
   return std::string(b.view());
 }
@@ -175,87 +192,25 @@ std::string nlohmann_serialize(const User &user) {
   return user_json.dump();
 }
 
-bool compare(const User &user1, const User &user2, const std::string &json) {
-  if (user1.id != user2.id) {
-    std::cerr << "id mismatch: " << user1.id << " != " << user2.id << " in "
-              << json << std::endl;
-    return false;
-  }
-  if (user1.email != user2.email) {
-    std::cerr << "email mismatch: " << user1.email << " != " << user2.email
-              << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.username != user2.username) {
-    std::cerr << "username mismatch: " << user1.username
-              << " != " << user2.username << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.profile.name != user2.profile.name) {
-    std::cerr << "profile.name mismatch: " << user1.profile.name
-              << " != " << user2.profile.name << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.profile.company != user2.profile.company) {
-    std::cerr << "profile.company mismatch: " << user1.profile.company
-              << " != " << user2.profile.company << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.profile.dob != user2.profile.dob) {
-    std::cerr << "profile.dob mismatch: " << user1.profile.dob
-              << " != " << user2.profile.dob << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.profile.address != user2.profile.address) {
-    std::cerr << "profile.address mismatch: " << user1.profile.address
-              << " != " << user2.profile.address << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.profile.location.lat != user2.profile.location.lat) {
-    std::cerr << "profile.location.lat mismatch: " << user1.profile.location.lat
-              << " != " << user2.profile.location.lat << " in " << json
-              << std::endl;
-    return false;
-  }
-  if (user1.profile.location.lng != user2.profile.location.lng) {
-    std::cerr << "profile.location.lng"
-              << " != " << user2.profile.location.lng << " in " << json
-              << std::endl;
-    return false;
-  }
-  if (user1.profile.about != user2.profile.about) {
-    std::cerr << "profile.about mismatch: " << user1.profile.about
-              << " != " << user2.profile.about << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.apiKey != user2.apiKey) {
-    std::cerr << "apiKey mismatch"
-              << " != " << user2.apiKey << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.roles.size() != user2.roles.size()) {
-    std::cerr << "roles size mismatch: " << user1.roles.size()
-              << " != " << user2.roles.size() << " in " << json << std::endl;
-    return false;
-  }
-  for (size_t i = 0; i < user1.roles.size(); i++) {
-    if (user1.roles[i] != user2.roles[i]) {
-      std::cerr << "roles[" << i << "] mismatch: " << user1.roles[i]
-                << " != " << user2.roles[i] << " in " << json << std::endl;
-      return false;
+template <typename T>
+bool compare(const T &user1, const T &user2, const std::string &json) {
+  bool result = true;
+  for_range<0, nonstatic_data_members_of(^T).size()>([&]<auto i>() {
+    constexpr auto mem = member_info<T>(i);
+    if constexpr (std::equality_comparable<typename[:type_of(mem):]>) {
+      if (user1.[:mem:] != user2.[:mem:]) {
+        std::cerr << std::format("{} mismatch: {} != {} in {}\n", identifier_of(mem),
+                               user1.[:mem:], user2.[:mem:], json);
+        result = false;
+      }
+    } else {
+      if (!compare(user1.[:mem:], user2.[:mem:], json)) {
+        result = false;
+      }
     }
-  }
-  if (user1.createdAt != user2.createdAt) {
-    std::cerr << "createdAt mismatch: " << user1.createdAt
-              << " != " << user2.createdAt << " in " << json << std::endl;
-    return false;
-  }
-  if (user1.updatedAt != user2.updatedAt) {
-    std::cerr << "updatedAt mismatch: " << user1.updatedAt
-              << " != " << user2.updatedAt << " in " << json << std::endl;
-    return false;
-  }
-  return true;
+  });
+
+  return result;
 }
 
 bool round_trip_nlohmann(const User &user) {
@@ -299,5 +254,6 @@ int main() {
       return EXIT_FAILURE;
     }
   }
+  printf("\n");
   return EXIT_SUCCESS;
 }

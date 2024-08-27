@@ -12,7 +12,7 @@ namespace json_builder {
 struct universal_formatter {
   constexpr auto parse(auto &ctx) { return ctx.begin(); }
 
-  template <typename T> auto format(T const &t, StringBuilder &sb) const {
+  template <typename T> auto format(T const &t, string_builder &sb) const {
     sb.append('{');
     auto delim = [first = true, &sb]() mutable {
       if (!first) {
