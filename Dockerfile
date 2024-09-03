@@ -1,5 +1,5 @@
 # Stage 1. Check out LLVM source code and run the build.
-FROM debian:12 as builder
+FROM debian:12 AS builder
 # First, Update the apt's source list and include the sources of the packages.
 RUN grep deb /etc/apt/sources.list | \
     sed 's/^deb/deb-src /g' >> /etc/apt/sources.list
@@ -21,6 +21,9 @@ RUN cmake --install /tmp/clang-source/build-llvm --prefix /tmp/clang-install
 
 # Stage 2. Produce a minimal release image with build results.
 FROM debian:12
+ARG USER_NAME
+ARG USER_ID
+ARG GROUP_ID
 LABEL maintainer "LLVM Developers"
 # Install packages for minimal useful image.
 RUN apt-get update && \
@@ -30,3 +33,10 @@ RUN apt-get update && \
 COPY --from=builder /tmp/clang-install/ /usr/local/
 RUN P=`/usr/local/bin/clang++ -v 2>&1 | grep Target | cut -d' ' -f2-`; echo /usr/local/lib/$P > /etc/ld.so.conf.d/$P.conf
 RUN ldconfig
+RUN addgroup --gid $GROUP_ID user; exit 0
+RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID $USER_NAME; exit 0
+RUN echo "$USER_NAME:$USER_NAME" | chpasswd && adduser $USER_NAME sudo
+RUN echo '----->'
+RUN echo 'root:Docker!' | chpasswd
+ENV TERM xterm-256color
+USER $USER_NAME
