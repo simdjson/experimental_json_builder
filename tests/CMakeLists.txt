@@ -3,3 +3,7 @@ add_compile_options(-Wall -Wextra -Weffc++ -Wsign-compare -Wshadow -Wwrite-strin
 add_executable(user_profile_tests user_profile_tests.cpp)
 target_link_libraries(user_profile_tests nlohmann_json::nlohmann_json simdjson::serialization simdjson::simdjson)
 add_test(user_profile_tests user_profile_tests)
+
+add_executable(universal_formatter_tests universal_formatter_tests.cpp)
+target_link_libraries(universal_formatter_tests simdjson::serialization simdjson::simdjson)
+add_test(universal_formatter_tests universal_formatter_tests)
