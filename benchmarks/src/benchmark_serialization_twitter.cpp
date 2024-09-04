@@ -18,6 +18,23 @@
 #include "benchmark_reflect_serialization_twitter.hpp"
 #endif
 
+#ifdef SIMDJSON_RUST_VERSION
+#include "../competitors/serde-benchmark/serde_benchmark.h"
+
+
+void bench_rust(serde_benchmark::TwitterData *data) {
+  const char * output = serde_benchmark::str_from_twitter(data);
+  size_t output_volume = strlen(output);
+  printf("# output volume: %zu bytes\n", output_volume);
+  volatile size_t measured_volume = 0;
+  pretty_print(1, output_volume, "bench_rust",
+               bench([&data, &measured_volume, &output_volume]() {
+                 const char * output = serde_benchmark::str_from_twitter(data);
+                 serde_benchmark::free_string(output);
+               }));
+}
+#endif
+
 template <class T> void bench_fast_simpler(T &data) {
   simdjson::json_builder::string_builder b;
   simdjson::json_builder::fast_to_json_string(b, data);
@@ -203,15 +220,24 @@ int main() {
 
   test_correctness(json_str);
 
-  // Benchmarking the serialization
+
+  // Loading up the data into a structure.
   simpleparser::json_parser::JsonParser parser(json_str);
   auto json_value = parser.parse();
   TwitterData my_struct;
-  bench_nlohmann(my_struct);
   simpleparser::json_builder::from_json(json_value, my_struct);
+
+  // Benchmarking the serialization
+  bench_nlohmann(my_struct);
   bench_fast_simpler(my_struct);
   bench_fast_with_alloc(my_struct);
   bench_fast_with_assign(my_struct);
+#ifdef SIMDJSON_RUST_VERSION
+  printf("# WARNING: The Rust benchmark may not be directly comparable since it does not use an equivalent data structure.");
+  serde_benchmark::TwitterData * td = serde_benchmark::twitter_from_str(json_str.c_str(), json_str.size());
+  bench_rust(td);
+  serde_benchmark::free_twitter(td);
+#endif
 #if SIMDJSON_BENCH_CPP_REFLECT
   bench_reflect_cpp(my_struct);
 #endif

@@ -6,6 +6,7 @@
 
 struct User {
   int64_t id;
+  std::string id_str;
   std::string name;
   std::string screen_name;
   std::string location;
