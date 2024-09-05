@@ -22,6 +22,14 @@ endif()
 target_link_libraries(SerializationTwitterBenchmark PRIVATE simpleparser simdjson::serialization nlohmann_json::nlohmann_json simdjson::simdjson)
 target_link_libraries(SerializationBenchmark PRIVATE simpleparser simdjson::serialization nlohmann_json::nlohmann_json simdjson::simdjson)
 
+# Linking libraries
+target_link_libraries(SerializationTwitterBenchmark PRIVATE glaze)
+target_link_libraries(SerializationBenchmark PRIVATE glaze)
+
+# Including directories
+target_include_directories(SerializationBenchmark PRIVATE ${glaze_SOURCE_DIR}/include)
+target_include_directories(SerializationTwitterBenchmark PRIVATE ${glaze_SOURCE_DIR}/include)
+
 # cpp-reflect may fail to build on LLVM 19 due to this issue
 # https://github.com/hanickadot/compile-time-regular-expressions/issues/307
 option(SIMDJSON_BENCH_CPP_REFLECT "include cpp reflect in the benchmarks" ON)
@@ -40,7 +48,5 @@ if(SIMDJSON_BENCH_CPP_REFLECT)
   target_link_libraries(SerializationBenchmark PRIVATE benchmark_reflect_serialization)
   target_compile_definitions(SerializationBenchmark PRIVATE SIMDJSON_BENCH_CPP_REFLECT=1)
 endif()
-
-
 
 target_compile_definitions(SerializationTwitterBenchmark PRIVATE JSON_FILE="${CMAKE_CURRENT_SOURCE_DIR}/data/twitter.json")

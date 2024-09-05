@@ -1,5 +1,6 @@
 #include "benchmark_helper.hpp"
 #include "custom_serializer.h"
+#include <glaze/glaze.hpp> // Include the main Glaze header
 #include "event_counter.h"
 #include "nlohmann_user_profile.hpp"
 #include "simdjson/json_builder/json_builder.h"
@@ -232,6 +233,22 @@ void bench_nlohmann(std::vector<User> &data) {
                }));
 }
 
+void bench_glaze(std::vector<User> &data) {
+  std::string output = nlohmann_serialize(data);
+  size_t output_volume = output.size();
+  printf("# output volume: %zu bytes\n", output_volume);
+
+  volatile size_t measured_volume = 0;
+  pretty_print(data.size(), output_volume, "bench_nlohmann",
+               bench([&data, &measured_volume, &output_volume]() {
+                 std::string buffer = glz::write_json(data).value_or("error");
+                 measured_volume = buffer.size();
+                 if (measured_volume != output_volume) {
+                   printf("mismatch\n");
+                 }
+               }));
+}
+
 int main() {
   constexpr int test_sz = 50'000;
   std::vector<User> test_data(test_sz);
@@ -247,5 +264,6 @@ int main() {
 #if SIMDJSON_BENCH_CPP_REFLECT
   bench_reflect_cpp(test_data);
 #endif
+  bench_glaze(test_data);
   return EXIT_SUCCESS;
 }

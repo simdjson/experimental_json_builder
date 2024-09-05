@@ -8,7 +8,16 @@ CPMAddPackage(
   GIT_TAG v0.13.0
 )
 
+# Add Glaze as a dependency
+CPMAddPackage(
+  NAME glaze
+  GITHUB_REPOSITORY stephenberry/glaze
+  GIT_TAG main # Adjust the tag if a specific version is needed
+)
 
+if(NOT glaze_ADDED)
+  message(Status "Failed to find glaze library")
+endif()
 
 if(NOT WIN32)
 # We want the check whether Rust is available before trying to build a crate.
