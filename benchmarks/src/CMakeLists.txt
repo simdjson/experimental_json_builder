@@ -8,7 +8,6 @@ if(SIMDJSON_SERIALIZER_SANITIZE_MEMORY)
   )
 endif()
 
-#include_directories(${CMAKE_SOURCE_DIR})
 
 # Add executable targets
 add_executable(SerializationBenchmark benchmark_serialization.cpp)
