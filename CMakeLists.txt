@@ -33,11 +33,6 @@ default to Debug. Consider setting CMAKE_BUILD_TYPE.")
   endif()
 endif()
 
-if (NOT CMAKE_BUILD_TYPE)
-  message(STATUS "No build type selected, default to Release")
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-endif()
-
 add_library(simdjson_serialization INTERFACE)
 add_library(simdjson::serialization ALIAS simdjson_serialization)
 target_compile_options(simdjson_serialization INTERFACE  -freflection -stdlib=libc++ -std=c++26)
