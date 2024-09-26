@@ -13,4 +13,5 @@ target_link_libraries(example2 PRIVATE simdjson::serialization simdjson::simdjso
 add_executable(example3 example3.cpp)
 target_link_libraries(example3 PRIVATE simdjson::serialization simdjson::simdjson)
 
-
+add_executable(example4 example4.cpp)
+target_link_libraries(example4 PRIVATE simdjson::serialization)
