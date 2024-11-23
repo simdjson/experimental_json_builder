@@ -5,7 +5,7 @@ That is, we see to build fast and convenient code to map your data structure to 
 
 Ultimately, this work might cover both serialization and deserialization.
 
-We've seen different proposals for C++ reflection, for now we will focus on the [latest p2996 paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r5.html) that is targeting C++26.
+We've seen different proposals for C++ reflection, for now we will focus on the [latest p2996 paper](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2996r8.html) that is targeting C++26.
 
 
 Table of Contents
