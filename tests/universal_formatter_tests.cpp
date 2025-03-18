@@ -1,8 +1,13 @@
 #include "simdjson/json_builder/universal_formatter.h"
-#include <iostream>
+#include <gtest/gtest.h>
 
-int main(){
-    simdjson::json_builder::StringBuilder b;
-    simdjson::json_builder::universal_formatter universal_formatter;
-    return EXIT_SUCCESS;
+TEST(UniversalFormatterTest, EmptyStruct) {
+  struct Empty {};
+
+  Empty obj;
+  simdjson::json_builder::universal_formatter universal_formatter;
+  simdjson::json_builder::string_builder string_builder;
+  universal_formatter.format(obj, string_builder);
+
+  EXPECT_EQ(string_builder.view(), "{}");
 }
