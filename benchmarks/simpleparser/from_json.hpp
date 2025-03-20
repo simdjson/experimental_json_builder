@@ -45,7 +45,7 @@ void from_json(const JsonValue& j, T& obj) requires(simdjson::json_builder::User
     }
 
     // Using reflection to iterate over data members
-    [:simdjson::json_builder::expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
+    [:simdjson::json_builder::expand(std::meta::nonstatic_data_members_of(^^T)):] >> [&]<auto dm> {
         constexpr auto name = std::meta::identifier_of(dm);
         auto it = j.object_value.find(std::string(reinterpret_cast<const char*>(name.data()), name.size()));
         if (it != j.object_value.end()) {
