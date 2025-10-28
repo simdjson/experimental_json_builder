@@ -1,3 +1,8 @@
+
+THIS REPOSITORY IS OBSOLETE. The functionality is part of the simdjson library.
+
+---
+
 # Experimental JSON Builder based on reflection
 
 This project seeks to develop a JSON builder library using the latest features of C++. 
