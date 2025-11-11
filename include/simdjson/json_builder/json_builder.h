@@ -48,7 +48,7 @@ template <typename R> consteval auto expand(R range) {
   for (auto r : range) {
     args.push_back(std::meta::reflect_value(r));
   }
-  return substitute(^__impl::replicator, args);
+  return substitute(^^__impl::replicator, args);
 }
 // end of workaround
 
@@ -88,7 +88,7 @@ template <class T>
 constexpr void atom(string_builder &b, const T &t) {
   int i = 0;
   b.append('{');
-  [:expand(std::meta::nonstatic_data_members_of(^T)):] >> [&]<auto dm> {
+  [:expand(std::meta::nonstatic_data_members_of(^^T)):] >> [&]<auto dm> {
     if (i != 0)
       b.append(',');
     constexpr auto v =
@@ -106,7 +106,7 @@ constexpr void atom(string_builder &b, const T &t) {
 template <class Z> void fast_to_json_string(string_builder &b, const Z &z) {
   int i = 0;
   b.append('{');
-  [:expand(std::meta::nonstatic_data_members_of(^Z)):] >> [&]<auto dm> {
+  [:expand(std::meta::nonstatic_data_members_of(^^Z)):] >> [&]<auto dm> {
     if (i != 0)
       b.append(',');
     constexpr auto v =

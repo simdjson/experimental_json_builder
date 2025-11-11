@@ -1,6 +1,7 @@
 #ifndef SIMDJSON_SERIALIZATION_UNIVERSAL_FORMATTER_HPP
 #define SIMDJSON_SERIALIZATION_UNIVERSAL_FORMATTER_HPP
-#include "simdjson/json_builder/string_builder.hpp"
+#include "simdjson/json_builder/string_builder.h"
+#include "simdjson/json_builder/json_builder.h"
 #include <experimental/meta>
 #include <format>
 #include <print>
@@ -22,16 +23,16 @@ struct universal_formatter {
       first = false;
     };
 
-    [:expand(bases_of(^T)):] >> [&]<auto base> {
+    [:expand(bases_of(^^T)):] >> [&]<auto base> {
       delim();
       sb.append(std::format("{}", (typename[:type_of(base):] const &)(t)));
     };
 
-    [:expand(nonstatic_data_members_of(^T)):] >> [&]<auto mem> {
-      delim();
-      sb.append(std::format("\"{}\":{}", name_of(mem),
-                            json_builder::atom(sb, t.[:mem:])));
-    };
+//    [:expand(nonstatic_data_members_of(^^T)):] >> [&]<auto mem> {
+//      delim();
+//      sb.append(std::format("\"{}\":{}", identifier_of(mem),
+//                            json_builder::atom(sb, t.[:mem:])));
+//    };
 
     sb.append('}');
   }

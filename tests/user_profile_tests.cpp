@@ -22,7 +22,7 @@ template <auto B, auto E, typename F> constexpr void for_range(F &&f) {
 }
 
 template <typename T> consteval auto member_info(int n) {
-  return nonstatic_data_members_of(^T)[n];
+  return nonstatic_data_members_of(^^T)[n];
 }
 
 std::mt19937 rng(12345);
@@ -195,7 +195,7 @@ std::string nlohmann_serialize(const User &user) {
 template <typename T>
 bool compare(const T &user1, const T &user2, const std::string &json) {
   bool result = true;
-  for_range<0, nonstatic_data_members_of(^T).size()>([&]<auto i>() {
+  for_range<0, nonstatic_data_members_of(^^T).size()>([&]<auto i>() {
     constexpr auto mem = member_info<T>(i);
     if constexpr (std::equality_comparable<typename[:type_of(mem):]>) {
       if (user1.[:mem:] != user2.[:mem:]) {
